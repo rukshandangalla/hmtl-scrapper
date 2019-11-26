@@ -17,7 +17,7 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/temp/CR_KUMARA.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/01-024.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -60,26 +60,58 @@ export class AppComponent implements OnInit {
       }
     });
 
-    const allTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
+    const summeryTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
 
-    allTables.forEach(tbl => {
-      const tableHeader = tbl.querySelector('td.tblHeader').innerHTML.replace(/=/g, '');
+    summeryTables.forEach(tbl => {
+      const tableHeader = tbl.querySelector('td.tblHeader').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '');
+      // console.log(tableHeader);
+
+      /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
         // tr list of the table: skip two tr *Header and Column Names*
         const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
 
         this.cribData.mailingAddress = [];
         trList.forEach(tr => {
-          // address
           const mailingAddress: Address = {
-            reportedDate: tr.querySelector('td:nth-child(2)').innerHTML,
-            address: tr.querySelector('td:nth-child(2)').innerHTML
+            reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
+            address: tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim()
           };
 
           this.cribData.mailingAddress.push(mailingAddress);
         });
       }
+
+      /* Permanent Address Table */
+      if (tableHeader === 'Permanent Address') {
+        // tr list of the table: skip two tr *Header and Column Names*
+        const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
+
+        this.cribData.permaneentAddress = [];
+        trList.forEach(tr => {
+          const mailingAddress: Address = {
+            reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
+            address: tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim()
+          };
+
+          this.cribData.permaneentAddress.push(mailingAddress);
+        });
+      }
+
+      /* Reported Names Table */
+      if (tableHeader === 'Reported Names') {
+        // tr list of the table: skip two tr *Header and Column Names*
+        const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
+
+        this.cribData.reportedNames = [];
+        trList.forEach(tr => {
+          const name = tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+          this.cribData.reportedNames.push(name);
+        });
+      }
     });
+
+    const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
 
     console.log(this.cribData);
   }
