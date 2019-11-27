@@ -1,5 +1,5 @@
 export interface Employment {
-  isActive?: boolean;
+  employment?: string;
   profession?: string;
   employerName?: string;
   businessName?: string;

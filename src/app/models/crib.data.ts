@@ -1,5 +1,6 @@
 import { Address } from './address';
 import { Employment } from './employment';
+import { Liability } from './liability';
 
 export interface CribData {
   reportDate?: string;
@@ -17,4 +18,5 @@ export interface CribData {
   permaneentAddress?: Address[];
   reportedNames?: string[];
   employmentData?: Employment[];
+  liabilities?: Liability[];
 }

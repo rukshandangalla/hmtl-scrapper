@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CribData } from './models/crib.data';
 import { HttpClient } from '@angular/common/http';
 import { Address } from './models/address';
+import { Employment } from './models/employment';
+import { Liability } from './models/liability';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +19,7 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/01-024.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/11-064.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -63,7 +65,7 @@ export class AppComponent implements OnInit {
     const summeryTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
 
     summeryTables.forEach(tbl => {
-      const tableHeader = tbl.querySelector('td.tblHeader').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '');
+      const tableHeader = this.clearDirtyText(tbl.querySelector('td.tblHeader').innerHTML);
       // console.log(tableHeader);
 
       /* Mailing Address Table */
@@ -74,8 +76,8 @@ export class AppComponent implements OnInit {
         this.cribData.mailingAddress = [];
         trList.forEach(tr => {
           const mailingAddress: Address = {
-            reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
-            address: tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim()
+            address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            reportedDate: tr.querySelector('td:nth-child(3)').innerHTML
           };
 
           this.cribData.mailingAddress.push(mailingAddress);
@@ -91,7 +93,7 @@ export class AppComponent implements OnInit {
         trList.forEach(tr => {
           const mailingAddress: Address = {
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
-            address: tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim()
+            address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
           };
 
           this.cribData.permaneentAddress.push(mailingAddress);
@@ -105,13 +107,48 @@ export class AppComponent implements OnInit {
 
         this.cribData.reportedNames = [];
         trList.forEach(tr => {
-          const name = tr.querySelector('td:nth-child(2)').innerHTML.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+          const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
           this.cribData.reportedNames.push(name);
         });
       }
     });
 
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
+    const trList = empTable.querySelectorAll('tr:nth-child(n + 3)');
+    this.cribData.employmentData = [];
+    trList.forEach(tr => {
+      const empData: Employment = {
+        employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+        profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+        employerName: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+        businessName: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+        businessRegistrationNo: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+        reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+      };
+
+      // console.log(empData);
+      this.cribData.employmentData.push(empData);
+    });
+
+    const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
+    this.cribData.liabilities = [];
+    liabilityTables.forEach((tbl, i) => {
+
+      // Liability section
+      if (i === 1) {
+        const trList = tbl.querySelectorAll('tr:nth-child(n + 2)');
+        trList.forEach(tr => {
+          const liability: Liability = {
+            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+            noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            totalAmountGranted: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
+          };
+
+          this.cribData.liabilities.push(liability);
+        });
+      }
+    });
 
     console.log(this.cribData);
   }
@@ -150,5 +187,9 @@ export class AppComponent implements OnInit {
 
   getElementContent(selector: string, htmlDoc: Document): string {
     return (htmlDoc.querySelectorAll(selector)[0] as HTMLInputElement).value;
+  }
+
+  clearDirtyText(inputStr: string): string {
+    return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
   }
 }
