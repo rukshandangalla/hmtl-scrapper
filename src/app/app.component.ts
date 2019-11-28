@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Address } from './models/address';
 import { Employment } from './models/employment';
 import { Liability } from './models/liability';
+import { ArrearsInfo } from './models/arrears.info';
 
 @Component({
   selector: 'app-root',
@@ -70,11 +71,8 @@ export class AppComponent implements OnInit {
 
       /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
-        // tr list of the table: skip two tr *Header and Column Names*
-        const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
-
         this.cribData.mailingAddress = [];
-        trList.forEach(tr => {
+        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML
@@ -86,11 +84,8 @@ export class AppComponent implements OnInit {
 
       /* Permanent Address Table */
       if (tableHeader === 'Permanent Address') {
-        // tr list of the table: skip two tr *Header and Column Names*
-        const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
-
         this.cribData.permaneentAddress = [];
-        trList.forEach(tr => {
+        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
@@ -102,11 +97,8 @@ export class AppComponent implements OnInit {
 
       /* Reported Names Table */
       if (tableHeader === 'Reported Names') {
-        // tr list of the table: skip two tr *Header and Column Names*
-        const trList = tbl.querySelectorAll('tr:nth-child(n + 3)');
-
         this.cribData.reportedNames = [];
-        trList.forEach(tr => {
+        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
           this.cribData.reportedNames.push(name);
         });
@@ -132,12 +124,13 @@ export class AppComponent implements OnInit {
 
     const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
     this.cribData.liabilities = [];
+    this.cribData.arrearsSummery = [];
+
     liabilityTables.forEach((tbl, i) => {
 
       // Liability section
       if (i === 1) {
-        const trList = tbl.querySelectorAll('tr:nth-child(n + 2)');
-        trList.forEach(tr => {
+        this.selectTrList(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
           const liability: Liability = {
             ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
             noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
@@ -148,7 +141,48 @@ export class AppComponent implements OnInit {
           this.cribData.liabilities.push(liability);
         });
       }
+
+      // Liability section
+      if (i === 2) {
+        this.selectTrList(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
+          const arrearsSummery: ArrearsInfo = {};
+          arrearsSummery.arrearsSlabs = [];
+          const tdList = tr.querySelectorAll('td');
+          tdList.forEach((td, j) => {
+            if (j === 0) {
+              arrearsSummery.facilityStatus = this.clearDirtyText(td.innerHTML);
+            } else {
+              if (!td.innerHTML.startsWith('<img')) {
+                let slabName: string;
+                switch (j) {
+                  case 1:
+                    slabName = '0';
+                    break;
+                  case 2:
+                    slabName = '1-30';
+                    break;
+                  case 3:
+                    slabName = '31-60';
+                    break;
+                  case 4:
+                    slabName = '61-90';
+                    break;
+                  case 5:
+                    slabName = 'over 90';
+                    break;
+                  default:
+                    break;
+                }
+                arrearsSummery.arrearsSlabs.push({ slab: slabName, count: td.innerHTML });
+              }
+            }
+          });
+
+          this.cribData.arrearsSummery.push(arrearsSummery);
+        });
+      }
     });
+
 
     console.log(this.cribData);
   }
@@ -191,5 +225,13 @@ export class AppComponent implements OnInit {
 
   clearDirtyText(inputStr: string): string {
     return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Get the tr list by nth selector
+   *
+   */
+  selectTrList(elem: Element, param: string): NodeListOf<Element> {
+    return elem.querySelectorAll(param);
   }
 }

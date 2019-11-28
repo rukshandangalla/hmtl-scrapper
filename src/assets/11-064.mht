@@ -40,7 +40,7 @@ type=3D"text/javascript"></script>
 language=3D"javascript" type=3D"text/jscript">
         var =
 objWindow;
-      
+
        function un_load()
        {
             =
@@ -65,9 +65,9 @@ clickIE()
  {
  if (document.all)
   {
-  (message);  
+  (message);
   return =
-false;   
+false;
   }
   }
 function clickNS(e) =
@@ -101,9 +101,9 @@ clickIE()
  {
  if (document.all)
   {
-  (message);  
+  (message);
   return =
-false;   
+false;
   }
   }
 function clickNS(e) =
@@ -143,41 +143,41 @@ window.event.keyCode =3D=3D 505)
         // Must return false or the browser will =
 refresh anyway
     }
-    
+
          if(window.event && =
-window.event.keyCode =3D=3D 17)  
+window.event.keyCode =3D=3D 17)
      { // Capture and remap =
 ctrl
-       //window.event.keyCode =3D 555; 	
+       //window.event.keyCode =3D 555;
 	   lastKeyDown =3D =
 'Ctrl';
-       return false; 
-     } 
-            
+       return false;
+     }
+
      =
-if(window.event && window.event.keyCode =3D=3D 78)  
+if(window.event && window.event.keyCode =3D=3D 78)
      { // =
 Capture and remap N
 	   if(lastKeyDown =3D=3D 'Ctrl') {
 		   =
 //alert('Ctrl+N has been disabled');
 	       //window.event.keyCode =
-=3D 555; 	  
-	       return false; 
+=3D 555;
+	       return false;
 	   }
-     } 
+     }
 	 =
-if(window.event && window.event.keyCode =3D=3D 82)  
+if(window.event && window.event.keyCode =3D=3D 82)
      { // =
 Capture and remap N
 	   if(lastKeyDown =3D=3D 'Ctrl') {
 		   =
 //alert('Ctrl+N has been disabled');
 	       //window.event.keyCode =
-=3D 555; 	  
-	       return false; 
+=3D 555;
+	       return false;
 	   }
-     }	
+     }
   }
 
     =
@@ -244,7 +244,7 @@ border=3D"0" alt=3D"">
                     </td>
                 =
 </tr>
-                
+
                 <tr>
                     =
 <td align=3D"left">
@@ -345,7 +345,7 @@ existing borrower</span>
 </td>
 		<td class=3D"text2New" align=3D"left" style=3D"height: 25%" =
 colspan=3D"3">
-                                                
+
    =
                                          </td>
 	</tr>
@@ -403,7 +403,7 @@ id=3D"trNameDetails">
                                                                      =
       </td>
 				</tr>
-				
+
                                        =
                                      </table>
                       =
@@ -426,11 +426,11 @@ width=3D"80%">722313062V</td></tr></table></div>
                                                  =
 </td>
 				</tr>
-				
+
                                              =
-                   
+
                                                 =
-                
+
                                                    =
              <tr id=3D"trSurrogateValues">
 					<td =
@@ -443,7 +443,7 @@ width=3D"80%">Male</td></tr></table></div>
                          =
                                            </td>
 				</tr>
-				
+
   =
                                                               <tr>
  =
@@ -455,9 +455,9 @@ width=3D"80%">Male</td></tr></table></div>
                                      <table border=3D"0" =
 width=3D"100%">
                                                     =
-                            
+
                                        =
-                                         
+
                           =
                                                   </table>
          =
@@ -473,9 +473,9 @@ width=3D"100%">
     </td>
 			</tr>
 		</table>
-		
+
                                 =
-                
+
                                             =
 </td>
 	</tr>
@@ -498,7 +498,7 @@ value=3D"http://www.microsoft.com/windows/downloads/ie/getitnow.mspx"=
               =
   <tr>
                     <td>
-                        
+
          =
            </td>
                 </tr>
@@ -928,6 +928,35 @@ label-type=3D"text" width=3D"15%" class=3D"textbrownNew"> 61-90 =
 </td><td label-type=3D"text" width=3D"15%" class=3D"textbrownNew"> =
 Over 90 </td></tr><tr height=3D"22px"><td width=3D"25%" =
 class=3D"text2New" bgcolor=3D"#FFFFFF">Active</td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF">4</td><td align=3D"right" width=3D"15%" =
+class=3D"text2New" bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF">3</td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td></tr>
+<tr height=3D"22px"><td width=3D"25%" =
+class=3D"text2New" bgcolor=3D"#FFFFFF">Terminated</td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td><td align=3D"right" width=3D"15%" =
+class=3D"text2New" bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF">2</td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td><td =
+align=3D"right" width=3D"15%" class=3D"text2New" =
+bgcolor=3D"#FFFFFF"><img =
+src=3D"https://crims.crib.lk/HTML/Images/spacer.gif"></td></tr>
+<tr height=3D"22px"><td width=3D"25%" =
+class=3D"text2New" bgcolor=3D"#FFFFFF">Parate Action</td><td =
 align=3D"right" width=3D"15%" class=3D"text2New" =
 bgcolor=3D"#FFFFFF">1</td><td align=3D"right" width=3D"15%" =
 class=3D"text2New" bgcolor=3D"#FFFFFF"><img =
@@ -1900,19 +1929,19 @@ document.getElementById('tblCommEOF').style.display=3D'none';
       =
                                                 }
                   =
-                      
+
                                              =
-      
+
                                                     =
 if('en-US'=3D=3D'en-US')
                                            =
          {
-	                                                    
+
   =
                                                       =
 document.getElementById('printfriendly').style.display=3D'inline';
  =
-                                                      
+
              =
                                        }
                            =
@@ -1933,7 +1962,7 @@ url=3D(0049)https://crims.crib.lk/HTML/Styles/styles_Ver2.css =
 .asterisk{
 font-size: 8px;
 color: =
-Red;	
+Red;
 }
 
 .bgimage
@@ -2389,14 +2418,14 @@ Arial;
 url(../images/tab_unsel_bg.gif);
 	text-decoration: =
 underline;
-	
-	
+
+
 }
 a.tablink1:hover
  {
 	color: =
 #981A1D;
-	
+
 }
 
 td
@@ -2439,7 +2468,7 @@ none;
 	font-weight: bold;
 	color: =
 #981a1d;
-	
+
 }
 .confidenceScore
 {
@@ -2518,7 +2547,7 @@ Arial;
 	font-weight: =
 normal;
 	color:#4A4A4A;
-	
+
 }
 
 .gridviewheading
@@ -2534,7 +2563,7 @@ bold;
 }
 .text2New1
 {
-	
+
 	font-family: =
 Arial;
 	font-size: =
@@ -2553,7 +2582,7 @@ normal;
 	font-family: =
 Arial;
 	color:#000000;
-	background-color:#FFEA00;		
+	background-color:#FFEA00;
 	font-size: =
 9px;
 	font-weight: =
@@ -2563,38 +2592,40 @@ normal;
 }
 
 .text2New4
-{=
+{
+=
 
-	
+
 	font-family: =
 Arial;
 	color:#FFFFFF;
-	background-color:#FFFFFF;	
+	background-color:#FFFFFF;
 	font-size: =
 9px;
 	font-weight: =
 normal;
 	font-weight:bold;
-	text-align:center;	
+	text-align:center;
 }
 .text2New3
 {
 =
-	
+
 	font-family: =
 Arial;
 	color:#000000;
-	background-color:#99CC00;	
+	background-color:#99CC00;
 	font-size: =
 9px;
 	font-weight: =
 normal;
 	font-weight:bold;
-	text-align:center;	
+	text-align:center;
 }
 
 .text3New
-{=
+{
+=
 
 	background-color:#FFFFFF;
 	font-family: Arial;
@@ -2785,7 +2816,7 @@ none;
 {
 	 font-family:Arial;
 	 =
-font-size:10px; 
+font-size:10px;
 	 color:#000000;
 	 font-weight:bold;
 	 padding: =
@@ -2894,7 +2925,7 @@ none;
 	background-color: =
 #981a1d;
 	font-family: Arial;
-			
+
 }
 .submenu
 {
@@ -3170,7 +3201,7 @@ Header
 	font-family: Arial;
 	font-size: 10px;
 	color: =
-#000000;	
+#000000;
 }
 .tblcftype
 {
@@ -3287,7 +3318,7 @@ none;
 bold;
 	color: =
 #000000;
-	
+
 }
 
 A.actionLink:hover
@@ -3603,7 +3634,7 @@ a.tree{
 	font-style: normal;
 	font-weight: normal;
 	color: =
-#71787b;	
+#71787b;
 	text-decoration: =
 none;
 }
@@ -3614,7 +3645,7 @@ a.tree:hover{
 	font-style: normal;
 	font-weight: normal;
 	color: =
-red;	
+red;
 	text-decoration: =
 none;
 }
@@ -3628,7 +3659,7 @@ a.tree:active{
 #71787b;
 	text-decoration: =
 none;
-}	
+}
 
 
 
@@ -3639,7 +3670,7 @@ none;
 	font-style: normal;
 	font-weight: bold;
 	color: =
-gray;	
+gray;
 }
 .treelabel2{
 	font-family:Arial;
@@ -3648,7 +3679,7 @@ gray;
 	font-style: normal;
 	font-weight: bold;
 	color: =
-gray;	
+gray;
 }
 
 .Orange
@@ -3726,7 +3757,7 @@ font-style:normal;
 {
 	background-color: =
 #dad7d7; border-color:White; color:Black; font-family:Arial; =
-font-weight:Bold; font-style:Italic; 
+font-weight:Bold; font-style:Italic;
 }
 a.tablinkblacknew
 {
@@ -3768,8 +3799,8 @@ center;
 {
 	font-family:Arial;
 	font-size: =
-10px; 
-	font-weight: bold; 
+10px;
+	font-weight: bold;
 	color: #6C6C6C;
 	text-align: =
 center;
@@ -3785,7 +3816,7 @@ underline;
 }
 .tableonposition
 {
-	
+
 }
 #bandsummstyle-Ver2
 {
@@ -3853,11 +3884,11 @@ rder: 0px;
 }
 .text2Dispute
 {
-	
+
 	font-family: =
 Arial;
 	color:#000000;
-	background-color:#008B8B;		
+	background-color:#008B8B;
 	font-size: =
 9px;
 	font-weight: =
@@ -3886,7 +3917,7 @@ url=3D(0054)https://crims.crib.lk/HTML/Styles/style_print_Ver2.css =
 .asterisk{
 font-size: 8px;
 color: =
-Red;	
+Red;
 }
 
 .bgimage
@@ -4360,18 +4391,18 @@ Arial;
 url(../images/tab_unsel_bg.gif);
 	text-decoration: =
 underline;
-	
-	
+
+
 }
 a.tablink1:hover
  {
 	color: =
 #981A1D;
-	
+
 }
 
 td
-{	
+{
 	font-family: Arial;
 	font-size: =
 9px;
@@ -4410,7 +4441,7 @@ none;
 	font-weight: bold;
 	color: =
 #981a1d;
-	
+
 }
 .confidenceScore
 {
@@ -4489,7 +4520,7 @@ Arial;
 	font-weight: normal;
 	color: =
 #4A4A4A;
-	
+
 }
 
 .gridviewheading
@@ -4505,7 +4536,7 @@ ont-family:  Arial;
 }
 .text2New1
 {
-	
+
 	font-family:  Arial;
 	font-size: =
 9px;
@@ -4523,7 +4554,7 @@ normal;
 	font-family:  =
 Arial;
 	color:#000000;
-	background-color:#FFEA00;		
+	background-color:#FFEA00;
 	font-size: =
 9px;
 	font-weight: =
@@ -4533,38 +4564,40 @@ normal;
 }
 
 .text2New4
-{=
+{
+=
 
-	
+
 	font-family:  =
 Arial;
 	color:#FFFFFF;
-	background-color:#FFFFFF;	
+	background-color:#FFFFFF;
 	font-size: =
 9px;
 	font-weight: =
 normal;
 	font-weight:bold;
-	text-align:center;	
+	text-align:center;
 }
 .text2New3
 {
 =
-	
+
 	font-family:  =
 Arial;
 	color:#000000;
-	background-color:#99CC00;	
+	background-color:#99CC00;
 	font-size: =
 9px;
 	font-weight: =
 normal;
 	font-weight:bold;
-	text-align:center;	
+	text-align:center;
 }
 
 .text3New
-{=
+{
+=
 
 	background-color:#FFFFFF;
 	font-family: Arial;
@@ -4755,7 +4788,7 @@ none;
 {
 	 font-family:Arial;
 	 =
-font-size:10px; 
+font-size:10px;
 	 color:#000000;
 	 font-weight:bold;
 	 padding: =
@@ -4864,7 +4897,7 @@ none;
 	background-color: =
 #981a1d;
 	font-family: Arial;
-			
+
 }
 .submenu
 {
@@ -5258,7 +5291,7 @@ none;
 bold;
 	color: =
 #000000;
-	
+
 }
 
 A.actionLink:hover
@@ -5583,7 +5616,7 @@ a.tree{
 	font-style: normal;
 	font-weight: normal;
 	color: =
-#71787b;	
+#71787b;
 	text-decoration: none;
 }
 a.tree:hover{
@@ -5593,7 +5626,7 @@ Arial;
 	font-style: normal;
 	font-weight: =
 normal;
-	color: red;	
+	color: red;
 	text-decoration: =
 none;
 }
@@ -5607,7 +5640,7 @@ a.tree:active{
 #71787b;
 	text-decoration: =
 none;
-}	
+}
 
 
 
@@ -5618,7 +5651,7 @@ none;
 	font-style: normal;
 	font-weight: bold;
 	color: =
-gray;	
+gray;
 }
 .treelabel2{
 	font-family: Arial;
@@ -5627,7 +5660,7 @@ gray;
 	font-style: normal;
 	font-weight: bold;
 	color: =
-gray;	
+gray;
 }
 
 .Orange
@@ -5705,7 +5738,7 @@ font-style:normal;
 {
 	background-color: =
 #dad7d7; border-color:White; color:Black; font-family: Arial; =
-font-weight:Bold; font-style:Italic; 
+font-weight:Bold; font-style:Italic;
 }
 a.tablinkblacknew
 {
@@ -5745,10 +5778,10 @@ center;
 }
 .label_grey_Inbox
 {
-	font-family: Arial;	
+	font-family: Arial;
 	font-size: =
-10px; 
-	font-weight: bold; 
+10px;
+	font-weight: bold;
 	color: #6C6C6C;
 	text-align: =
 center;
@@ -5815,11 +5848,11 @@ top: 130px; padding: 1em;
 }
 .text2Dispute
 {
-	
+
 	font-family: =
 Arial;
 	color:#000000;
-	background-color:#008B8B;		
+	background-color:#008B8B;
 	font-size: =
 9px;
 	font-weight: =
@@ -5828,14 +5861,15 @@ normal;
 	text-align:center;
 }
 .pagebreaker
-{=
+{
+=
 
-	page-break-before:always;	
+	page-break-before:always;
 }
 .pagebreakerafter
 {
 	page-break-after:=
-always;	
+always;
 }
 #bandsummstyleNew-Ver2
 {
