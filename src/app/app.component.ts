@@ -5,6 +5,7 @@ import { Address } from './models/address';
 import { Employment } from './models/employment';
 import { Liability } from './models/liability';
 import { ArrearsInfo } from './models/arrears.info';
+import { InquiryInfo } from './models/inquiry.info';
 
 @Component({
   selector: 'app-root',
@@ -183,8 +184,27 @@ export class AppComponent implements OnInit {
       }
     });
 
+    const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
+    this.cribData.inquiries = [];
 
-    console.log(this.cribData);
+    inquiryTables.forEach((tbl, i) => {
+      // Inquiry by lending institutions section
+      if (i === 0) {
+        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const inquiry: InquiryInfo = {
+            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            reason: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+            facilityType: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+            currency: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
+            amount: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
+          };
+          this.cribData.inquiries.push(inquiry);
+        });
+      }
+    });
+
+    console.log(this.cribData.inquiries);
   }
 
   /**
@@ -224,7 +244,14 @@ export class AppComponent implements OnInit {
   }
 
   clearDirtyText(inputStr: string): string {
-    return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+    if (!inputStr.startsWith('<img')) {
+      return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+    } else {
+      // because: Report empty indicated using this foolish method
+      // => https://crims.crib.lk/HTML/Images/spacer.gif OR <img "" src"https://crims.crib.lk/HTML/Images/c_ND.gif">
+      // it means, if inputStr starts with <img that's a empty
+      return 'N/A';
+    }
   }
 
   /**
