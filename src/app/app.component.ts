@@ -6,6 +6,8 @@ import { Employment } from './models/employment';
 import { Liability } from './models/liability';
 import { ArrearsInfo } from './models/arrears.info';
 import { InquiryInfo } from './models/inquiry.info';
+import { SettledInfo } from './models/settled.info';
+import { SettledSlab } from './models/settled.slab';
 
 @Component({
   selector: 'app-root',
@@ -42,25 +44,25 @@ export class AppComponent implements OnInit {
     nodes.forEach(node => {
       const title = node.innerHTML;
       if (title === 'Date of Birth') {
-        this.cribData.dob = node.nextElementSibling.innerHTML;
+        this.cribData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Gender') {
-        this.cribData.gender = node.nextElementSibling.innerHTML;
+        this.cribData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Citizenship') {
-        this.cribData.citizenship = node.nextElementSibling.innerHTML;
+        this.cribData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Telephone Number') {
-        this.cribData.telphone = node.nextElementSibling.innerHTML;
+        this.cribData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Mobile Number') {
-        this.cribData.mobile = node.nextElementSibling.innerHTML;
+        this.cribData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Driving License') {
-        this.cribData.dlNo = node.nextElementSibling.innerHTML;
+        this.cribData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Passport Number') {
-        this.cribData.passportNo = node.nextElementSibling.innerHTML;
+        this.cribData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
     });
 
@@ -184,6 +186,70 @@ export class AppComponent implements OnInit {
       }
     });
 
+    const settledTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver4');
+    this.cribData.settledSummary = [];
+    const settledSummaryHeaders: string[] = [];
+    settledTables.forEach((tbl, i) => {
+      // Settled Summery section
+      if (i === 0) {
+        // Extract slab headers
+        const slabs = tbl.querySelector('tr:nth-child(2)').querySelectorAll('td');
+        slabs.forEach((td, j) => {
+          // SKIP Reporting Period text
+          if (j !== 0) {
+            settledSummaryHeaders.push(this.clearDirtyText(td.innerHTML).replace('Settlements from ', ''));
+          }
+        });
+
+        // Extract Data : Assuming only two types of data -> As Borrower & As Guarantor
+        [tbl.querySelector('tr:nth-child(4)'), tbl.querySelector('tr:nth-child(5)')].forEach(tr => {
+          const settledSummary: SettledInfo = {
+            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
+          };
+
+          settledSummary.settledSlabs = [];
+          tr.querySelectorAll('td').forEach((td, k) => {
+            // console.log(k / 2, k % 2);
+            // SKIP first two cells
+            if (k !== 0 && k !== 1) {
+              // console.log(Math.floor(k / 2) - 1);
+              // console.log(td.innerHTML, settledSummaryHeaders[Math.floor(k / 2) - 1]);
+
+              const currentHeaderName = settledSummaryHeaders[Math.floor(k / 2) - 1];
+
+              let settledSlab: SettledSlab = {};
+
+              // Get previous header name
+              if (settledSummary.settledSlabs.length > 0) {
+                const previousHeaderName = settledSummary.settledSlabs[settledSummary.settledSlabs.length - 1].reportingPeriod;
+
+                // Previous Obj
+                if (currentHeaderName === previousHeaderName) {
+                  settledSlab = settledSummary.settledSlabs[settledSummary.settledSlabs.length - 1];
+                  settledSlab.totalAmount = td.innerHTML;
+                } else {
+                  settledSlab.reportingPeriod = currentHeaderName;
+                  settledSlab.noOfFacilities = td.innerHTML;
+                  settledSummary.settledSlabs.push(settledSlab);
+                }
+
+              } else {
+                settledSlab.reportingPeriod = currentHeaderName;
+                settledSlab.noOfFacilities = td.innerHTML;
+                settledSummary.settledSlabs.push(settledSlab);
+              }
+            }
+          });
+
+          settledSummary.settledSlabs = settledSummary.settledSlabs.filter(slab => {
+            return this.clearDirtyText(slab.noOfFacilities) !== '' && this.clearDirtyText(slab.totalAmount);
+          });
+
+          this.cribData.settledSummary.push(settledSummary);
+        });
+      }
+    });
+
     const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
     this.cribData.inquiries = [];
 
@@ -202,9 +268,20 @@ export class AppComponent implements OnInit {
           this.cribData.inquiries.push(inquiry);
         });
       }
+      // Inquiry by borrower section
+      if (i === 1) {
+        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const inquiry: InquiryInfo = {
+            institutionCategory: 'SELF',
+            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            reason: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
+          };
+          this.cribData.inquiries.push(inquiry);
+        });
+      }
     });
 
-    console.log(this.cribData.inquiries);
+    console.log(this.cribData);
   }
 
   /**

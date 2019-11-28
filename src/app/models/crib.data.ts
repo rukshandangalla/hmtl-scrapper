@@ -3,6 +3,7 @@ import { Employment } from './employment';
 import { Liability } from './liability';
 import { ArrearsInfo } from './arrears.info';
 import { InquiryInfo } from './inquiry.info';
+import { SettledInfo } from './settled.info';
 
 export interface CribData {
   reportDate?: string;
@@ -23,4 +24,5 @@ export interface CribData {
   liabilities?: Liability[];
   arrearsSummery?: ArrearsInfo[];
   inquiries?: InquiryInfo[];
+  settledSummary?: SettledInfo[];
 }
