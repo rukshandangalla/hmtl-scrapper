@@ -8,6 +8,7 @@ import { ArrearsInfo } from './models/arrears.info';
 import { InquiryInfo } from './models/inquiry.info';
 import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
+import { SettledType } from './models/settled.type';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +24,7 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/11-064.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -109,9 +110,8 @@ export class AppComponent implements OnInit {
     });
 
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
-    const trList = empTable.querySelectorAll('tr:nth-child(n + 3)');
     this.cribData.employmentData = [];
-    trList.forEach(tr => {
+    this.selectTrList(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
       const empData: Employment = {
         employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
         profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
@@ -190,7 +190,7 @@ export class AppComponent implements OnInit {
     this.cribData.settledSummary = [];
     const settledSummaryHeaders: string[] = [];
     settledTables.forEach((tbl, i) => {
-      // Settled Summery section
+      // Settled summery section
       if (i === 0) {
         // Extract slab headers
         const slabs = tbl.querySelector('tr:nth-child(2)').querySelectorAll('td');
@@ -204,7 +204,8 @@ export class AppComponent implements OnInit {
         // Extract Data : Assuming only two types of data -> As Borrower & As Guarantor
         [tbl.querySelector('tr:nth-child(4)'), tbl.querySelector('tr:nth-child(5)')].forEach(tr => {
           const settledSummary: SettledInfo = {
-            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
+            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            settledTypes: []
           };
 
           settledSummary.settledSlabs = [];
@@ -247,6 +248,43 @@ export class AppComponent implements OnInit {
 
           this.cribData.settledSummary.push(settledSummary);
         });
+      }
+
+      // Settled summery details section
+      if (i === 1) {
+        const htmlTbl = (tbl as HTMLTableElement);
+
+        const settledTypesB: SettledType[] = [];
+        const settledTypesG: SettledType[] = [];
+
+        // tslint:disable-next-line: prefer-for-of
+        for (let j = 0; j < htmlTbl.rows.length; j++) {
+
+          if (j > 2) {
+            let settledType: SettledType = {};
+            settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
+
+            settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[2].innerHTML);
+            settledType.totalAmount = this.clearDirtyText(htmlTbl.rows[j].cells[3].innerHTML);
+
+            if (settledType.noOfFacilities !== '' && settledType.totalAmount !== '') {
+              settledTypesB.push(settledType);
+            }
+
+            settledType = {};
+            settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
+
+            settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[4].innerHTML);
+            settledType.totalAmount = this.clearDirtyText(htmlTbl.rows[j].cells[5].innerHTML);
+
+            if (settledType.noOfFacilities !== '' && settledType.totalAmount !== '') {
+              settledTypesG.push(settledType);
+            }
+          }
+        }
+
+        this.cribData.settledSummary.find(s => s.ownership === 'As Guarantor').settledTypes = settledTypesG;
+        this.cribData.settledSummary.find(s => s.ownership === 'As Borrower').settledTypes = settledTypesB;
       }
     });
 
