@@ -7,6 +7,7 @@ export interface CreditFacility {
   cfType?: string;
   cfStatus?: string;
   ownership?: string;
+  currency?: string;
   amountGrantedLimit?: string;
   currentBalance?: string;
   arrearsAmount?: string;

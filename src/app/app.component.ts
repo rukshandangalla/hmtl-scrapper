@@ -335,19 +335,20 @@ export class AppComponent implements OnInit {
             cfType: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
             cfStatus: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
             ownership: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
-            amountGrantedLimit: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
-            currentBalance: this.clearDirtyText(tr.querySelector('td:nth-child(8)').innerHTML),
-            arrearsAmount: this.clearDirtyText(tr.querySelector('td:nth-child(9)').innerHTML),
-            installmentAmount: this.clearDirtyText(tr.querySelector('td:nth-child(10)').innerHTML),
-            amountWrittenOff: this.clearDirtyText(tr.querySelector('td:nth-child(11)').innerHTML),
-            reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(12)').innerHTML),
-            firstDisburseDate: this.clearDirtyText(tr.querySelector('td:nth-child(13)').innerHTML),
-            latestPaymentDate: this.clearDirtyText(tr.querySelector('td:nth-child(14)').innerHTML),
-            restructuringDate: this.clearDirtyText(tr.querySelector('td:nth-child(15)').innerHTML),
-            endDate: this.clearDirtyText(tr.querySelector('td:nth-child(16)').innerHTML),
-            repayType: this.clearDirtyText(tr.querySelector('td:nth-child(17)').innerHTML),
-            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(18)').innerHTML), // TODO: Read purpose from summery
-            coverage: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML),
+            currency: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
+            amountGrantedLimit: this.clearDirtyText(tr.querySelector('td:nth-child(8)').innerHTML),
+            currentBalance: this.clearDirtyText(tr.querySelector('td:nth-child(9)').innerHTML),
+            arrearsAmount: this.clearDirtyText(tr.querySelector('td:nth-child(10)').innerHTML),
+            installmentAmount: this.clearDirtyText(tr.querySelector('td:nth-child(11)').innerHTML),
+            amountWrittenOff: this.clearDirtyText(tr.querySelector('td:nth-child(12)').innerHTML),
+            reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(13)').innerHTML),
+            firstDisburseDate: this.clearDirtyText(tr.querySelector('td:nth-child(14)').innerHTML),
+            latestPaymentDate: this.clearDirtyText(tr.querySelector('td:nth-child(15)').innerHTML),
+            restructuringDate: this.clearDirtyText(tr.querySelector('td:nth-child(16)').innerHTML),
+            endDate: this.clearDirtyText(tr.querySelector('td:nth-child(17)').innerHTML),
+            repayType: this.clearDirtyText(tr.querySelector('td:nth-child(18)').innerHTML),
+            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML), // TODO: Read purpose from summery
+            coverage: this.clearDirtyText(tr.querySelector('td:nth-child(20)').innerHTML),
             paymentSlabs: []
           };
 
@@ -442,7 +443,7 @@ export class AppComponent implements OnInit {
   clearDirtyText(inputStr: string): string {
     if (!inputStr.startsWith('<img')) {
       if (!inputStr.startsWith('--')) {
-        return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+        return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim().replace('&amp;', '&');
       } else {
         return 'N/A';
       }
