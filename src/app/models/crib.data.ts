@@ -4,6 +4,7 @@ import { Liability } from './liability';
 import { ArrearsInfo } from './arrears.info';
 import { InquiryInfo } from './inquiry.info';
 import { SettledInfo } from './settled.info';
+import { CreditFacility } from './credit.facility';
 
 export interface CribData {
   reportDate?: string;
@@ -25,4 +26,5 @@ export interface CribData {
   arrearsSummery?: ArrearsInfo[];
   inquiries?: InquiryInfo[];
   settledSummary?: SettledInfo[];
+  creditFacilities?: CreditFacility[];
 }

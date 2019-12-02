@@ -9,6 +9,7 @@ import { InquiryInfo } from './models/inquiry.info';
 import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
+import { CreditFacility } from './models/credit.facility';
 
 @Component({
   selector: 'app-root',
@@ -76,7 +77,7 @@ export class AppComponent implements OnInit {
       /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
         this.cribData.mailingAddress = [];
-        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML
@@ -89,7 +90,7 @@ export class AppComponent implements OnInit {
       /* Permanent Address Table */
       if (tableHeader === 'Permanent Address') {
         this.cribData.permaneentAddress = [];
-        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
@@ -102,7 +103,7 @@ export class AppComponent implements OnInit {
       /* Reported Names Table */
       if (tableHeader === 'Reported Names') {
         this.cribData.reportedNames = [];
-        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
           this.cribData.reportedNames.push(name);
         });
@@ -111,7 +112,7 @@ export class AppComponent implements OnInit {
 
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
     this.cribData.employmentData = [];
-    this.selectTrList(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
+    this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
       const empData: Employment = {
         employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
         profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
@@ -133,7 +134,7 @@ export class AppComponent implements OnInit {
 
       // Liability section
       if (i === 1) {
-        this.selectTrList(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
           const liability: Liability = {
             ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
             noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
@@ -147,7 +148,7 @@ export class AppComponent implements OnInit {
 
       // Liability section
       if (i === 2) {
-        this.selectTrList(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const arrearsSummery: ArrearsInfo = {};
           arrearsSummery.arrearsSlabs = [];
           const tdList = tr.querySelectorAll('td');
@@ -294,7 +295,7 @@ export class AppComponent implements OnInit {
     inquiryTables.forEach((tbl, i) => {
       // Inquiry by lending institutions section
       if (i === 0) {
-        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const inquiry: InquiryInfo = {
             inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
             institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
@@ -308,7 +309,7 @@ export class AppComponent implements OnInit {
       }
       // Inquiry by borrower section
       if (i === 1) {
-        this.selectTrList(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const inquiry: InquiryInfo = {
             institutionCategory: 'SELF',
             inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
@@ -319,7 +320,87 @@ export class AppComponent implements OnInit {
       }
     });
 
-    console.log(this.cribData);
+
+    const creditFacilityTables = htmlDoc.querySelectorAll('#bandstyle-Ver2');
+    this.cribData.creditFacilities = [];
+    const cfSlabHeaders: string[] = [];
+    creditFacilityTables.forEach((tbl, i) => {
+      // Credit Facility Details Section
+      if (i === 1) {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+          const facility: CreditFacility = {
+            id: +this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+            catalog: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            institution: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            cfType: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+            cfStatus: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
+            amountGrantedLimit: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
+            currentBalance: this.clearDirtyText(tr.querySelector('td:nth-child(8)').innerHTML),
+            arrearsAmount: this.clearDirtyText(tr.querySelector('td:nth-child(9)').innerHTML),
+            installmentAmount: this.clearDirtyText(tr.querySelector('td:nth-child(10)').innerHTML),
+            amountWrittenOff: this.clearDirtyText(tr.querySelector('td:nth-child(11)').innerHTML),
+            reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(12)').innerHTML),
+            firstDisburseDate: this.clearDirtyText(tr.querySelector('td:nth-child(13)').innerHTML),
+            latestPaymentDate: this.clearDirtyText(tr.querySelector('td:nth-child(14)').innerHTML),
+            restructuringDate: this.clearDirtyText(tr.querySelector('td:nth-child(15)').innerHTML),
+            endDate: this.clearDirtyText(tr.querySelector('td:nth-child(16)').innerHTML),
+            repayType: this.clearDirtyText(tr.querySelector('td:nth-child(17)').innerHTML),
+            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(18)').innerHTML), // TODO: Read purpose from summery
+            coverage: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML),
+            paymentSlabs: []
+          };
+
+          this.cribData.creditFacilities.push(facility);
+        });
+      }
+
+      // Slab Headers: coming from table header
+      if (i === 2) {
+        this.selectNodeListByParam(tbl, 'tr').forEach(tr => {
+          // Loop through td list
+          this.selectNodeListByParam(tr, 'td').forEach((td, j) => {
+            // Skip 'no' from headers
+            if (j !== 0) {
+              cfSlabHeaders.push(this.clearDirtyText(td.innerHTML));
+            }
+          });
+        });
+      }
+
+      // Skip last two tables as it has disclaimer and legend
+      if (i >= 3 && i < (creditFacilityTables.length - 2)) {
+        // console.log(tbl);
+        this.selectNodeListByParam(tbl, 'tr').forEach(tr => {
+          let creditFacility: CreditFacility;
+          // Loop through td list
+          this.selectNodeListByParam(tr, 'td').forEach((td, j) => {
+
+            // creditFacility.paymentSlabs = [];
+
+            // Get the facility id, it's in column 1 : then find the relevent CF
+            if (j === 0) {
+              creditFacility = {};
+              creditFacility = this.cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
+            } else {
+              const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
+              creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
+            }
+          });
+
+          // Inserting payment slab to credit facility
+          this.cribData.creditFacilities.forEach(cf => {
+            if (creditFacility && cf.id === creditFacility.id) {
+              cf.paymentSlabs = creditFacility.paymentSlabs;
+            }
+          });
+
+          creditFacility = null;
+        });
+      }
+    });
+
+    console.log(this.cribData.creditFacilities);
   }
 
   /**
@@ -360,7 +441,11 @@ export class AppComponent implements OnInit {
 
   clearDirtyText(inputStr: string): string {
     if (!inputStr.startsWith('<img')) {
-      return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+      if (!inputStr.startsWith('--')) {
+        return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim();
+      } else {
+        return 'N/A';
+      }
     } else {
       // because: Report empty indicated using this foolish method
       // => https://crims.crib.lk/HTML/Images/spacer.gif OR <img "" src"https://crims.crib.lk/HTML/Images/c_ND.gif">
@@ -373,7 +458,7 @@ export class AppComponent implements OnInit {
    * Get the tr list by nth selector
    *
    */
-  selectTrList(elem: Element, param: string): NodeListOf<Element> {
+  selectNodeListByParam(elem: Element, param: string): NodeListOf<Element> {
     return elem.querySelectorAll(param);
   }
 }
