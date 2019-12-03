@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CribData } from './models/crib.data';
+import { CribReportTypeEnum } from './models/crib.report.type.enum';
+import { cribData } from './models/consumer.crib.data';
+import { CorporateCribData } from './models/corporate.crib.data';
 import { HttpClient } from '@angular/common/http';
 import { Address } from './models/address';
 import { Employment } from './models/employment';
@@ -10,6 +13,8 @@ import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
+import { DemographicData } from './models/demographic.data';
+import { FirmographicData } from './models/firmographic.data';
 
 @Component({
   selector: 'app-root',
@@ -18,13 +23,17 @@ import { CreditFacility } from './models/credit.facility';
 })
 export class AppComponent implements OnInit {
 
-  cribData: CribData = {};
+  cribData: cribData = {};
+
+  get getCribReportType() { return CribReportTypeEnum; }
 
   constructor(private http: HttpClient) { }
+
 
   async ngOnInit() {
 
     /** Temp Read File */
+    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
     let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
@@ -33,40 +42,26 @@ export class AppComponent implements OnInit {
     const parser = new DOMParser();
     const htmlDoc = parser.parseFromString(cribFileContent, 'text/html');
 
+    // Get Report Date & ID
     this.cribData = {
       reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
-      reportID: this.getElementContent('#texthdnTicketId', htmlDoc),
-      name: this.getNodeContent('#lblNameValue', htmlDoc),
-      nicNo: this.getNodeContent('#divIdentifier .text2New', htmlDoc),
-      gender: this.getNodeContent('#divSurrogate .text2New', htmlDoc)
+      reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
     };
 
-    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
+    // ** Identify consumer or corporate report ** //
+    const reportType: string = this.clearDirtyText(htmlDoc.querySelector('#lblProdNameValue').innerHTML);
 
-    nodes.forEach(node => {
-      const title = node.innerHTML;
-      if (title === 'Date of Birth') {
-        this.cribData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Gender') {
-        this.cribData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Citizenship') {
-        this.cribData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Telephone Number') {
-        this.cribData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Mobile Number') {
-        this.cribData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Driving License') {
-        this.cribData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Passport Number') {
-        this.cribData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-    });
+    if (reportType.startsWith('Corporate')) {
+      this.cribData.reportType = CribReportTypeEnum.Corporate;
+      this.cribData.demographicData = null;
+      this.cribData.firmographic = this.processCorporateData(htmlDoc);
+    } else if (reportType.startsWith('Consumer')) {
+      this.cribData.reportType = CribReportTypeEnum.Consumer;
+      this.cribData.firmographic = null;
+      this.cribData.demographicData = this.processConsumerData(htmlDoc);
+    } else {
+      console.log('Unknown Report Type!!');
+    }
 
     const summeryTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
 
@@ -401,7 +396,58 @@ export class AppComponent implements OnInit {
       }
     });
 
-    console.log(this.cribData.creditFacilities);
+    console.log(this.cribData);
+  }
+
+  /**
+   * Process Consumer Data
+   * Demographic Details
+   */
+  processConsumerData(htmlDoc: Document): DemographicData {
+    const demographicData: DemographicData = {};
+
+    demographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
+    demographicData.nicNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
+    demographicData.gender = this.getNodeContent('#divSurrogate .text2New', htmlDoc);
+
+    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
+
+    nodes.forEach(node => {
+      const title = node.innerHTML;
+      if (title === 'Date of Birth') {
+        demographicData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Gender') {
+        demographicData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Citizenship') {
+        demographicData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Telephone Number') {
+        demographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Mobile Number') {
+        demographicData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Driving License') {
+        demographicData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Passport Number') {
+        demographicData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+    });
+
+    return demographicData;
+  }
+
+  /**
+   * Process Corporate Data
+   * Firmographic Details
+   */
+  processCorporateData(htmlDoc: Document): FirmographicData {
+    const firmographicData: FirmographicData = {};
+
+    return firmographicData;
   }
 
   /**

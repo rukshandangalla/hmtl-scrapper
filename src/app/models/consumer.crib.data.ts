@@ -1,5 +1,3 @@
-import { DemographicData } from './demographic.data';
-import { FirmographicData } from './firmographic.data';
 import { Address } from './address';
 import { Employment } from './employment';
 import { Liability } from './liability';
@@ -7,14 +5,19 @@ import { ArrearsInfo } from './arrears.info';
 import { InquiryInfo } from './inquiry.info';
 import { SettledInfo } from './settled.info';
 import { CreditFacility } from './credit.facility';
-import { CribReportTypeEnum } from './crib.report.type.enum';
 
-export interface CribData {
-  reportType?: CribReportTypeEnum;
+export interface ConsumerCribData {
   reportDate?: string;
   reportID?: string;
-  demographicData?: DemographicData;
-  firmographic?: FirmographicData;
+  name?: string;
+  nicNo?: string;
+  passportNo?: string;
+  dlNo?: string;
+  dob?: string;
+  gender?: string;
+  citizenship?: string;
+  telphone?: string;
+  mobile?: string;
   mailingAddress?: Address[];
   permaneentAddress?: Address[];
   reportedNames?: string[];
