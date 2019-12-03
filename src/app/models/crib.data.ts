@@ -14,7 +14,7 @@ export interface CribData {
   reportDate?: string;
   reportID?: string;
   demographicData?: DemographicData;
-  firmographic?: FirmographicData;
+  firmographicData?: FirmographicData;
   mailingAddress?: Address[];
   permaneentAddress?: Address[];
   reportedNames?: string[];

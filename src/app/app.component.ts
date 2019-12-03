@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CribData } from './models/crib.data';
+import { DemographicData } from './models/demographic.data';
+import { FirmographicData } from './models/firmographic.data';
 import { CribReportTypeEnum } from './models/crib.report.type.enum';
-import { cribData } from './models/consumer.crib.data';
-import { CorporateCribData } from './models/corporate.crib.data';
 import { HttpClient } from '@angular/common/http';
 import { Address } from './models/address';
 import { Employment } from './models/employment';
@@ -13,8 +13,6 @@ import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
-import { DemographicData } from './models/demographic.data';
-import { FirmographicData } from './models/firmographic.data';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +21,7 @@ import { FirmographicData } from './models/firmographic.data';
 })
 export class AppComponent implements OnInit {
 
-  cribData: cribData = {};
+  cribData: CribData = {};
 
   get getCribReportType() { return CribReportTypeEnum; }
 
@@ -48,21 +46,106 @@ export class AppComponent implements OnInit {
       reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
     };
 
+    // Update report type
+    this.cribData = this.updateReportType(this.cribData, htmlDoc);
+
+    // Process summary data
+    this.cribData = this.processSummaryData(this.cribData, htmlDoc);
+
+    // Process employment data
+    this.cribData = this.processEmployementData(this.cribData, htmlDoc);
+
+    // Process liabilities
+    this.cribData = this.processLiabilities(this.cribData, htmlDoc);
+
+    // Process settled data
+    this.cribData = this.processSettledData(this.cribData, htmlDoc);
+
+    // Process settled data
+    this.cribData = this.processInquiryData(this.cribData, htmlDoc);
+
+    // Process credit facilities
+    this.cribData = this.processCreditFacilities(this.cribData, htmlDoc);
+
+    console.log(this.cribData);
+  }
+
+  updateReportType(cribData: CribData, htmlDoc: Document): CribData {
     // ** Identify consumer or corporate report ** //
     const reportType: string = this.clearDirtyText(htmlDoc.querySelector('#lblProdNameValue').innerHTML);
 
     if (reportType.startsWith('Corporate')) {
-      this.cribData.reportType = CribReportTypeEnum.Corporate;
-      this.cribData.demographicData = null;
-      this.cribData.firmographic = this.processCorporateData(htmlDoc);
+      cribData.reportType = CribReportTypeEnum.Corporate;
+      cribData.demographicData = null;
+      cribData.firmographicData = this.processCorporateData(htmlDoc);
     } else if (reportType.startsWith('Consumer')) {
-      this.cribData.reportType = CribReportTypeEnum.Consumer;
-      this.cribData.firmographic = null;
-      this.cribData.demographicData = this.processConsumerData(htmlDoc);
+      cribData.reportType = CribReportTypeEnum.Consumer;
+      cribData.firmographicData = null;
+      cribData.demographicData = this.processConsumerData(htmlDoc);
     } else {
       console.log('Unknown Report Type!!');
     }
 
+    return cribData;
+  }
+
+  /**
+   * Process Consumer Data
+   * Demographic Details
+   */
+  processConsumerData(htmlDoc: Document): DemographicData {
+    const demographicData: DemographicData = {};
+
+    demographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
+    demographicData.nicNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
+    demographicData.gender = this.getNodeContent('#divSurrogate .text2New', htmlDoc);
+
+    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
+
+    nodes.forEach(node => {
+      const title = node.innerHTML;
+      if (title === 'Date of Birth') {
+        demographicData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Gender') {
+        demographicData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Citizenship') {
+        demographicData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Telephone Number') {
+        demographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Mobile Number') {
+        demographicData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Driving License') {
+        demographicData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Passport Number') {
+        demographicData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+    });
+
+    return demographicData;
+  }
+
+  /**
+   * Process Corporate Data
+   * Firmographic Details
+   */
+  processCorporateData(htmlDoc: Document): FirmographicData {
+    const firmographicData: FirmographicData = {};
+
+    return firmographicData;
+  }
+
+  /**
+   * Process Summary Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processSummaryData(cribData: CribData, htmlDoc: Document): CribData {
     const summeryTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
 
     summeryTables.forEach(tbl => {
@@ -71,42 +154,51 @@ export class AppComponent implements OnInit {
 
       /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
-        this.cribData.mailingAddress = [];
+        cribData.mailingAddress = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML
           };
 
-          this.cribData.mailingAddress.push(mailingAddress);
+          cribData.mailingAddress.push(mailingAddress);
         });
       }
 
       /* Permanent Address Table */
       if (tableHeader === 'Permanent Address') {
-        this.cribData.permaneentAddress = [];
+        cribData.permaneentAddress = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
           };
 
-          this.cribData.permaneentAddress.push(mailingAddress);
+          cribData.permaneentAddress.push(mailingAddress);
         });
       }
 
       /* Reported Names Table */
       if (tableHeader === 'Reported Names') {
-        this.cribData.reportedNames = [];
+        cribData.reportedNames = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
-          this.cribData.reportedNames.push(name);
+          cribData.reportedNames.push(name);
         });
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Employement Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processEmployementData(cribData: CribData, htmlDoc: Document): CribData {
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
-    this.cribData.employmentData = [];
+    cribData.employmentData = [];
     this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
       const empData: Employment = {
         employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
@@ -117,13 +209,21 @@ export class AppComponent implements OnInit {
         reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
       };
 
-      // console.log(empData);
-      this.cribData.employmentData.push(empData);
+      cribData.employmentData.push(empData);
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process liabilities
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processLiabilities(cribData: CribData, htmlDoc: Document): CribData {
     const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
-    this.cribData.liabilities = [];
-    this.cribData.arrearsSummery = [];
+    cribData.liabilities = [];
+    cribData.arrearsSummery = [];
 
     liabilityTables.forEach((tbl, i) => {
 
@@ -137,7 +237,7 @@ export class AppComponent implements OnInit {
             totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
           };
 
-          this.cribData.liabilities.push(liability);
+          cribData.liabilities.push(liability);
         });
       }
 
@@ -177,14 +277,24 @@ export class AppComponent implements OnInit {
             }
           });
 
-          this.cribData.arrearsSummery.push(arrearsSummery);
+          cribData.arrearsSummery.push(arrearsSummery);
         });
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Settled Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processSettledData(cribData: CribData, htmlDoc: Document): CribData {
     const settledTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver4');
-    this.cribData.settledSummary = [];
+    cribData.settledSummary = [];
     const settledSummaryHeaders: string[] = [];
+
     settledTables.forEach((tbl, i) => {
       // Settled summery section
       if (i === 0) {
@@ -242,7 +352,7 @@ export class AppComponent implements OnInit {
             return this.clearDirtyText(slab.noOfFacilities) !== '' && this.clearDirtyText(slab.totalAmount);
           });
 
-          this.cribData.settledSummary.push(settledSummary);
+          cribData.settledSummary.push(settledSummary);
         });
       }
 
@@ -279,11 +389,20 @@ export class AppComponent implements OnInit {
           }
         }
 
-        this.cribData.settledSummary.find(s => s.ownership === 'As Guarantor').settledTypes = settledTypesG;
-        this.cribData.settledSummary.find(s => s.ownership === 'As Borrower').settledTypes = settledTypesB;
+        cribData.settledSummary.find(s => s.ownership === 'As Guarantor').settledTypes = settledTypesG;
+        cribData.settledSummary.find(s => s.ownership === 'As Borrower').settledTypes = settledTypesB;
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Inquiry Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processInquiryData(cribData: CribData, htmlDoc: Document): CribData {
     const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
     this.cribData.inquiries = [];
 
@@ -315,10 +434,19 @@ export class AppComponent implements OnInit {
       }
     });
 
+    return cribData;
+  }
 
+  /**
+   * Process Credit Facilities
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processCreditFacilities(cribData: CribData, htmlDoc: Document): CribData {
     const creditFacilityTables = htmlDoc.querySelectorAll('#bandstyle-Ver2');
-    this.cribData.creditFacilities = [];
+    cribData.creditFacilities = [];
     const cfSlabHeaders: string[] = [];
+
     creditFacilityTables.forEach((tbl, i) => {
       // Credit Facility Details Section
       if (i === 1) {
@@ -347,7 +475,7 @@ export class AppComponent implements OnInit {
             paymentSlabs: []
           };
 
-          this.cribData.creditFacilities.push(facility);
+          cribData.creditFacilities.push(facility);
         });
       }
 
@@ -377,7 +505,7 @@ export class AppComponent implements OnInit {
             // Get the facility id, it's in column 1 : then find the relevent CF
             if (j === 0) {
               creditFacility = {};
-              creditFacility = this.cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
+              creditFacility = cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
             } else {
               const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
               creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
@@ -385,7 +513,7 @@ export class AppComponent implements OnInit {
           });
 
           // Inserting payment slab to credit facility
-          this.cribData.creditFacilities.forEach(cf => {
+          cribData.creditFacilities.forEach(cf => {
             if (creditFacility && cf.id === creditFacility.id) {
               cf.paymentSlabs = creditFacility.paymentSlabs;
             }
@@ -396,63 +524,11 @@ export class AppComponent implements OnInit {
       }
     });
 
-    console.log(this.cribData);
-  }
-
-  /**
-   * Process Consumer Data
-   * Demographic Details
-   */
-  processConsumerData(htmlDoc: Document): DemographicData {
-    const demographicData: DemographicData = {};
-
-    demographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
-    demographicData.nicNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
-    demographicData.gender = this.getNodeContent('#divSurrogate .text2New', htmlDoc);
-
-    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
-
-    nodes.forEach(node => {
-      const title = node.innerHTML;
-      if (title === 'Date of Birth') {
-        demographicData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Gender') {
-        demographicData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Citizenship') {
-        demographicData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Telephone Number') {
-        demographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Mobile Number') {
-        demographicData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Driving License') {
-        demographicData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-      if (title === 'Passport Number') {
-        demographicData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
-      }
-    });
-
-    return demographicData;
-  }
-
-  /**
-   * Process Corporate Data
-   * Firmographic Details
-   */
-  processCorporateData(htmlDoc: Document): FirmographicData {
-    const firmographicData: FirmographicData = {};
-
-    return firmographicData;
+    return cribData;
   }
 
   /**
    * Upload Process Method
-   *
    */
   uploadHandler(event) {
     const file = event.files[0];
@@ -467,9 +543,8 @@ export class AppComponent implements OnInit {
       const htmlDoc = parser.parseFromString(content, 'text/html');
 
       this.cribData = {
-        reportID: this.getElementContent('#texthdnTicketId', htmlDoc),
-        name: this.getNodeContent('#lblNameValue', htmlDoc),
-        nicNo: this.getNodeContent('#divIdentifier .text2New', htmlDoc)
+        reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
+        reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
       };
 
       console.log(this.cribData);
@@ -478,14 +553,23 @@ export class AppComponent implements OnInit {
     reader.readAsText(file);
   }
 
+  /**
+   * Get node content by css selector
+   */
   getNodeContent(selector: string, htmlDoc: Document): string {
     return htmlDoc.querySelectorAll(selector)[0].innerHTML;
   }
 
+  /**
+   * Get element content by css query
+   */
   getElementContent(selector: string, htmlDoc: Document): string {
     return (htmlDoc.querySelectorAll(selector)[0] as HTMLInputElement).value;
   }
 
+  /**
+   * Clear innerHTML with img data or dirty text
+   */
   clearDirtyText(inputStr: string): string {
     if (!inputStr.startsWith('<img')) {
       if (!inputStr.startsWith('--')) {
