@@ -31,8 +31,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -46,25 +46,12 @@ export class AppComponent implements OnInit {
       reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
     };
 
-    // Update report type
     this.cribData = this.updateReportType(this.cribData, htmlDoc);
-
-    // Process summary data
     this.cribData = this.processSummaryData(this.cribData, htmlDoc);
-
-    // Process employment data
     this.cribData = this.processEmployementData(this.cribData, htmlDoc);
-
-    // Process liabilities
     this.cribData = this.processLiabilities(this.cribData, htmlDoc);
-
-    // Process settled data
     this.cribData = this.processSettledData(this.cribData, htmlDoc);
-
-    // Process settled data
     this.cribData = this.processInquiryData(this.cribData, htmlDoc);
-
-    // Process credit facilities
     this.cribData = this.processCreditFacilities(this.cribData, htmlDoc);
 
     console.log(this.cribData);
@@ -199,18 +186,21 @@ export class AppComponent implements OnInit {
   processEmployementData(cribData: CribData, htmlDoc: Document): CribData {
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
     cribData.employmentData = [];
-    this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
-      const empData: Employment = {
-        employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
-        profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-        employerName: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-        businessName: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-        businessRegistrationNo: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-        reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
-      };
 
-      cribData.employmentData.push(empData);
-    });
+    if (empTable !== null) {
+      this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
+        const empData: Employment = {
+          employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+          profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          employerName: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+          businessName: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+          businessRegistrationNo: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+          reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+        };
+
+        cribData.employmentData.push(empData);
+      });
+    }
 
     return cribData;
   }
@@ -508,6 +498,7 @@ export class AppComponent implements OnInit {
               creditFacility = cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
             } else {
               const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
+              // console.log(creditFacility, j);
               creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
             }
           });
