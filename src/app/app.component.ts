@@ -13,6 +13,7 @@ import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
+import { EconomicActivity } from './models/economic.activity';
 
 @Component({
   selector: 'app-root',
@@ -90,7 +91,7 @@ export class AppComponent implements OnInit {
     const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
 
     nodes.forEach(node => {
-      const title = node.innerHTML;
+      const title = this.clearDirtyText(node.innerHTML);
       if (title === 'Date of Birth') {
         demographicData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
@@ -124,6 +125,34 @@ export class AppComponent implements OnInit {
   processCorporateData(htmlDoc: Document): FirmographicData {
     const firmographicData: FirmographicData = {};
 
+    firmographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
+    firmographicData.brNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
+
+    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
+
+    nodes.forEach(node => {
+      const title = this.clearDirtyText(node.innerHTML);
+      // console.log(title);
+      if (title === 'VAT Registration Number') {
+        firmographicData.vatRegNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Date of Registration') {
+        firmographicData.dateOfRegistration = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Legal Constitution') {
+        firmographicData.legalConstitution = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Telephone Number') {
+        firmographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Fax Number') {
+        firmographicData.fax = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'URL') {
+        firmographicData.url = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+    });
+
     return firmographicData;
   }
 
@@ -137,7 +166,6 @@ export class AppComponent implements OnInit {
 
     summeryTables.forEach(tbl => {
       const tableHeader = this.clearDirtyText(tbl.querySelector('td.tblHeader').innerHTML);
-      // console.log(tableHeader);
 
       /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
@@ -171,6 +199,19 @@ export class AppComponent implements OnInit {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
           cribData.reportedNames.push(name);
+        });
+      }
+
+      // Economic Activity History - Only available in corporate reports
+      if (tableHeader === 'Economic Activity History' && cribData.reportType === CribReportTypeEnum.Corporate) {
+        cribData.firmographicData.economicActivityHistory = [];
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const economicActivity: EconomicActivity = {
+            activityType: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
+          };
+
+          cribData.firmographicData.economicActivityHistory.push(economicActivity);
         });
       }
     });
@@ -306,12 +347,8 @@ export class AppComponent implements OnInit {
 
           settledSummary.settledSlabs = [];
           tr.querySelectorAll('td').forEach((td, k) => {
-            // console.log(k / 2, k % 2);
             // SKIP first two cells
             if (k !== 0 && k !== 1) {
-              // console.log(Math.floor(k / 2) - 1);
-              // console.log(td.innerHTML, settledSummaryHeaders[Math.floor(k / 2) - 1]);
-
               const currentHeaderName = settledSummaryHeaders[Math.floor(k / 2) - 1];
 
               let settledSlab: SettledSlab = {};
@@ -493,7 +530,6 @@ export class AppComponent implements OnInit {
 
       // Skip last two tables as it has disclaimer and legend
       if (i >= 3 && i < (creditFacilityTables.length - 2)) {
-        // console.log(tbl);
         this.selectNodeListByParam(tbl, 'tr').forEach(tr => {
           let creditFacility: CreditFacility;
           // Loop through td list
@@ -506,7 +542,6 @@ export class AppComponent implements OnInit {
             } else {
               if (creditFacility !== undefined && !creditFacilityBlockIds.includes(i)) {
                 const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
-                // console.log(creditFacility, j, i);
                 creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
               }
             }
