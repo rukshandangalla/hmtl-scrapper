@@ -436,10 +436,18 @@ export class AppComponent implements OnInit {
     const creditFacilityTables = htmlDoc.querySelectorAll('#bandstyle-Ver2');
     cribData.creditFacilities = [];
     const cfSlabHeaders: string[] = [];
+    const creditFacilityBlockIds: number[] = [];
+
+    // ********************************************************************************** //
+    // ************** All facility tables in sequence of 1, 23, 45, 67.... ************** //
+    // ********************************************************************************** //
+    for (let k = 0; k <= creditFacilityTables.length / 22; k++) {
+      creditFacilityBlockIds.push(22 * k + 1);
+    }
 
     creditFacilityTables.forEach((tbl, i) => {
       // Credit Facility Details Section
-      if (i === 1) {
+      if (creditFacilityBlockIds.includes(i)) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
           const facility: CreditFacility = {
             id: +this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
@@ -460,7 +468,8 @@ export class AppComponent implements OnInit {
             restructuringDate: this.clearDirtyText(tr.querySelector('td:nth-child(16)').innerHTML),
             endDate: this.clearDirtyText(tr.querySelector('td:nth-child(17)').innerHTML),
             repayType: this.clearDirtyText(tr.querySelector('td:nth-child(18)').innerHTML),
-            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML), // TODO: Read purpose from summery
+            // TODO: Read purpose from summery, No need if this available from backend
+            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML),
             coverage: this.clearDirtyText(tr.querySelector('td:nth-child(20)').innerHTML),
             paymentSlabs: []
           };
@@ -490,22 +499,22 @@ export class AppComponent implements OnInit {
           // Loop through td list
           this.selectNodeListByParam(tr, 'td').forEach((td, j) => {
 
-            // creditFacility.paymentSlabs = [];
-
             // Get the facility id, it's in column 1 : then find the relevent CF
             if (j === 0) {
               creditFacility = {};
               creditFacility = cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
             } else {
-              const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
-              // console.log(creditFacility, j);
-              creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
+              if (creditFacility !== undefined && !creditFacilityBlockIds.includes(i)) {
+                const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
+                // console.log(creditFacility, j, i);
+                creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
+              }
             }
           });
 
           // Inserting payment slab to credit facility
           cribData.creditFacilities.forEach(cf => {
-            if (creditFacility && cf.id === creditFacility.id) {
+            if (creditFacility && creditFacility !== undefined && cf.id === creditFacility.id) {
               cf.paymentSlabs = creditFacility.paymentSlabs;
             }
           });
@@ -566,13 +575,13 @@ export class AppComponent implements OnInit {
       if (!inputStr.startsWith('--')) {
         return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim().replace('&amp;', '&');
       } else {
-        return 'N/A';
+        return null;
       }
     } else {
       // because: Report empty indicated using this foolish method
       // => https://crims.crib.lk/HTML/Images/spacer.gif OR <img "" src"https://crims.crib.lk/HTML/Images/c_ND.gif">
       // it means, if inputStr starts with <img that's a empty
-      return 'N/A';
+      return null;
     }
   }
 
