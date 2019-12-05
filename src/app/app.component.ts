@@ -14,6 +14,7 @@ import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
 import { EconomicActivity } from './models/economic.activity';
+import { DishonourOfCheque } from './models/dishonour.of.cheque';
 
 @Component({
   selector: 'app-root',
@@ -54,6 +55,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.processSettledData(this.cribData, htmlDoc);
     this.cribData = this.processInquiryData(this.cribData, htmlDoc);
     this.cribData = this.processCreditFacilities(this.cribData, htmlDoc);
+    this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
 
     console.log(this.cribData);
   }
@@ -555,6 +557,34 @@ export class AppComponent implements OnInit {
           });
 
           creditFacility = null;
+        });
+      }
+    });
+
+    return cribData;
+  }
+
+  /**
+   * Process Dishonour Of Cheques
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processDishonourOfCheques(cribData: CribData, htmlDoc: Document): CribData {
+    const dishonourOfChequeTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
+    cribData.dishonourOfCheques = [];
+
+    dishonourOfChequeTables.forEach((tbl, i) => {
+      if (i === 1) {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
+          const dishonourOfCheque: DishonourOfCheque = {
+            institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+            dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+            reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+          };
+
+          cribData.dishonourOfCheques.push(dishonourOfCheque);
         });
       }
     });
