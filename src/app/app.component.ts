@@ -34,8 +34,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    // let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -602,47 +602,57 @@ export class AppComponent implements OnInit {
   processCatalogue(cribData: CribData, htmlDoc: Document): CribData {
     const catalogueTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
     cribData.catalogue = [];
-    const catHeaders: { type: string, trIndex: number }[] = [];
-    const updatedCatlogues: CatalogueData[] = [];
+    const catHeaders: { type: string, trIndex: number, childIndexs?: number[] }[] = [];
+    let dataList: number[] = [];
 
     catalogueTables.forEach((tbl, i) => {
       // Always last table is Catalogue
       if (i === (catalogueTables.length - 1)) {
-        tbl.querySelectorAll('.tblHeader').forEach((td, j) => {
+        const nodeList = this.selectNodeListByParam(tbl, 'tr');
+
+        nodeList.forEach((tr, j) => {
           // Skip 'Catalogue Description' heading
           if (j !== 0) {
-            // Preparing sections
-            const catData: CatalogueData = {
-              type: this.clearDirtyText(td.innerHTML),
-              data: []
-            };
-            cribData.catalogue.push(catData);
-            // catHeaders.push({ type: this.clearDirtyText(td.innerHTML), trIndex: j });
+            const header = tr.querySelector('td.tblHeader');
+            if (nodeList.length === (j + 1)) {
+              catHeaders[catHeaders.length - 1].childIndexs = dataList;
+            }
+
+            if (header !== null) {
+              if (catHeaders.length > 0) {
+                catHeaders[catHeaders.length - 1].childIndexs = dataList;
+              }
+
+              catHeaders.push({ type: this.clearDirtyText(header.innerHTML), trIndex: j, childIndexs: [] });
+              dataList = [];
+            } else {
+              dataList.push(j);
+            }
           }
         });
 
-        // console.log(catHeaders);
+        // Remove all the first element from the arrays
+        catHeaders.forEach(cat => {
+          cat.childIndexs.shift();
+        });
 
-        let currentCat: CatalogueData;
         this.selectNodeListByParam(tbl, 'tr').forEach((tr, j) => {
-          // Skip 'Catalogue Description' heading
-          if (j !== 0) {
-            const catType = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
-            currentCat = cribData.catalogue.find(c => c.type === catType);
+          const currentCatHeader = catHeaders.find(ch => ch.trIndex === j);
+          const dataCatHeader = catHeaders.find(ch => ch.childIndexs.includes(j));
 
-            cribData.catalogue.forEach(cat => {
-              if (cat.type !== catType) {
-                // cat.data.push({ code: catType });
-              }
-            });
+          if (currentCatHeader !== undefined) {
+            const catData: CatalogueData = {
+              type: currentCatHeader.type,
+              data: []
+            };
+            cribData.catalogue.push(catData);
+          }
 
-            // const catDesc = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
-            // console.log(tr, catType);
-            console.log(currentCat, catType);
+          if (dataCatHeader !== undefined) {
+            const code = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+            const desc = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
 
-            if (currentCat !== undefined) {
-              // currentCat.data.push({ code: catType });
-            }
+            cribData.catalogue.find(c => c.type === dataCatHeader.type).data.push({ code, description: desc });
           }
         });
       }
