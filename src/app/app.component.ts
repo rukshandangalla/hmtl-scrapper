@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CribData } from './models/crib.data';
+import { DemographicData } from './models/demographic.data';
+import { FirmographicData } from './models/firmographic.data';
+import { CribReportTypeEnum } from './models/crib.report.type.enum';
 import { HttpClient } from '@angular/common/http';
 import { Address } from './models/address';
 import { Employment } from './models/employment';
@@ -10,6 +13,9 @@ import { SettledInfo } from './models/settled.info';
 import { SettledSlab } from './models/settled.slab';
 import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
+import { EconomicActivity } from './models/economic.activity';
+import { DishonourOfCheque } from './models/dishonour.of.cheque';
+import { CatalogueData } from './models/catalogue.data';
 
 @Component({
   selector: 'app-root',
@@ -20,11 +26,15 @@ export class AppComponent implements OnInit {
 
   cribData: CribData = {};
 
+  get getCribReportType() { return CribReportTypeEnum; }
+
   constructor(private http: HttpClient) { }
+
 
   async ngOnInit() {
 
     /** Temp Read File */
+    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
     let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
@@ -33,102 +43,222 @@ export class AppComponent implements OnInit {
     const parser = new DOMParser();
     const htmlDoc = parser.parseFromString(cribFileContent, 'text/html');
 
+    // Get Report Date & ID
     this.cribData = {
       reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
-      reportID: this.getElementContent('#texthdnTicketId', htmlDoc),
-      name: this.getNodeContent('#lblNameValue', htmlDoc),
-      nicNo: this.getNodeContent('#divIdentifier .text2New', htmlDoc),
-      gender: this.getNodeContent('#divSurrogate .text2New', htmlDoc)
+      reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
     };
+
+    this.cribData = this.updateReportType(this.cribData, htmlDoc);
+    this.cribData = this.processSummaryData(this.cribData, htmlDoc);
+    this.cribData = this.processEmployementData(this.cribData, htmlDoc);
+    this.cribData = this.processLiabilities(this.cribData, htmlDoc);
+    this.cribData = this.processSettledData(this.cribData, htmlDoc);
+    this.cribData = this.processInquiryData(this.cribData, htmlDoc);
+    this.cribData = this.processCreditFacilities(this.cribData, htmlDoc);
+    this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
+    this.cribData = this.processCatalogue(this.cribData, htmlDoc);
+
+    console.log(this.cribData);
+  }
+
+  updateReportType(cribData: CribData, htmlDoc: Document): CribData {
+    // ** Identify consumer or corporate report ** //
+    const reportType: string = this.clearDirtyText(htmlDoc.querySelector('#lblProdNameValue').innerHTML);
+
+    if (reportType.startsWith('Corporate')) {
+      cribData.reportType = CribReportTypeEnum.Corporate;
+      cribData.demographicData = null;
+      cribData.firmographicData = this.processCorporateData(htmlDoc);
+    } else if (reportType.startsWith('Consumer')) {
+      cribData.reportType = CribReportTypeEnum.Consumer;
+      cribData.firmographicData = null;
+      cribData.demographicData = this.processConsumerData(htmlDoc);
+    } else {
+      console.log('Unknown Report Type!!');
+    }
+
+    return cribData;
+  }
+
+  /**
+   * Process Consumer Data
+   * Demographic Details
+   */
+  processConsumerData(htmlDoc: Document): DemographicData {
+    const demographicData: DemographicData = {};
+
+    demographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
+    demographicData.nicNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
+    demographicData.gender = this.getNodeContent('#divSurrogate .text2New', htmlDoc);
 
     const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
 
     nodes.forEach(node => {
-      const title = node.innerHTML;
+      const title = this.clearDirtyText(node.innerHTML);
       if (title === 'Date of Birth') {
-        this.cribData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.dob = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Gender') {
-        this.cribData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.gender = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Citizenship') {
-        this.cribData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.citizenship = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Telephone Number') {
-        this.cribData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Mobile Number') {
-        this.cribData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.mobile = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Driving License') {
-        this.cribData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.dlNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
       if (title === 'Passport Number') {
-        this.cribData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+        demographicData.passportNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
       }
     });
 
+    return demographicData;
+  }
+
+  /**
+   * Process Corporate Data
+   * Firmographic Details
+   */
+  processCorporateData(htmlDoc: Document): FirmographicData {
+    const firmographicData: FirmographicData = {};
+
+    firmographicData.name = this.getNodeContent('#lblNameValue', htmlDoc);
+    firmographicData.brNo = this.getNodeContent('#divIdentifier .text2New', htmlDoc);
+
+    const nodes = htmlDoc.querySelectorAll('#bandsummstyle-Ver2 td.textbrownNew');
+
+    nodes.forEach(node => {
+      const title = this.clearDirtyText(node.innerHTML);
+      // console.log(title);
+      if (title === 'VAT Registration Number') {
+        firmographicData.vatRegNo = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Date of Registration') {
+        firmographicData.dateOfRegistration = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Legal Constitution') {
+        firmographicData.legalConstitution = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Telephone Number') {
+        firmographicData.telphone = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'Fax Number') {
+        firmographicData.fax = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+      if (title === 'URL') {
+        firmographicData.url = this.clearDirtyText(node.nextElementSibling.innerHTML);
+      }
+    });
+
+    return firmographicData;
+  }
+
+  /**
+   * Process Summary Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processSummaryData(cribData: CribData, htmlDoc: Document): CribData {
     const summeryTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
 
     summeryTables.forEach(tbl => {
       const tableHeader = this.clearDirtyText(tbl.querySelector('td.tblHeader').innerHTML);
-      // console.log(tableHeader);
 
       /* Mailing Address Table */
       if (tableHeader === 'Mailing Address') {
-        this.cribData.mailingAddress = [];
+        cribData.mailingAddress = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML
           };
 
-          this.cribData.mailingAddress.push(mailingAddress);
+          cribData.mailingAddress.push(mailingAddress);
         });
       }
 
       /* Permanent Address Table */
       if (tableHeader === 'Permanent Address') {
-        this.cribData.permaneentAddress = [];
+        cribData.permaneentAddress = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const mailingAddress: Address = {
             reportedDate: tr.querySelector('td:nth-child(3)').innerHTML,
             address: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML)
           };
 
-          this.cribData.permaneentAddress.push(mailingAddress);
+          cribData.permaneentAddress.push(mailingAddress);
         });
       }
 
       /* Reported Names Table */
       if (tableHeader === 'Reported Names') {
-        this.cribData.reportedNames = [];
+        cribData.reportedNames = [];
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
           const name = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
-          this.cribData.reportedNames.push(name);
+          cribData.reportedNames.push(name);
+        });
+      }
+
+      // Economic Activity History - Only available in corporate reports
+      if (tableHeader === 'Economic Activity History' && cribData.reportType === CribReportTypeEnum.Corporate) {
+        cribData.firmographicData.economicActivityHistory = [];
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const economicActivity: EconomicActivity = {
+            activityType: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
+          };
+
+          cribData.firmographicData.economicActivityHistory.push(economicActivity);
         });
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Employement Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processEmployementData(cribData: CribData, htmlDoc: Document): CribData {
     const empTable = htmlDoc.querySelector('#bandstyleEMP-Ver2');
-    this.cribData.employmentData = [];
-    this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
-      const empData: Employment = {
-        employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
-        profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-        employerName: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-        businessName: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-        businessRegistrationNo: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-        reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
-      };
+    cribData.employmentData = [];
 
-      // console.log(empData);
-      this.cribData.employmentData.push(empData);
-    });
+    if (empTable !== null) {
+      this.selectNodeListByParam(empTable, 'tr:nth-child(n + 3)').forEach(tr => {
+        const empData: Employment = {
+          employment: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+          profession: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          employerName: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+          businessName: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+          businessRegistrationNo: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+          reportedDate: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+        };
 
+        cribData.employmentData.push(empData);
+      });
+    }
+
+    return cribData;
+  }
+
+  /**
+   * Process liabilities
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processLiabilities(cribData: CribData, htmlDoc: Document): CribData {
     const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
-    this.cribData.liabilities = [];
-    this.cribData.arrearsSummery = [];
+    cribData.liabilities = [];
+    cribData.arrearsSummery = [];
 
     liabilityTables.forEach((tbl, i) => {
 
@@ -142,7 +272,7 @@ export class AppComponent implements OnInit {
             totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
           };
 
-          this.cribData.liabilities.push(liability);
+          cribData.liabilities.push(liability);
         });
       }
 
@@ -182,14 +312,24 @@ export class AppComponent implements OnInit {
             }
           });
 
-          this.cribData.arrearsSummery.push(arrearsSummery);
+          cribData.arrearsSummery.push(arrearsSummery);
         });
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Settled Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processSettledData(cribData: CribData, htmlDoc: Document): CribData {
     const settledTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver4');
-    this.cribData.settledSummary = [];
+    cribData.settledSummary = [];
     const settledSummaryHeaders: string[] = [];
+
     settledTables.forEach((tbl, i) => {
       // Settled summery section
       if (i === 0) {
@@ -211,12 +351,8 @@ export class AppComponent implements OnInit {
 
           settledSummary.settledSlabs = [];
           tr.querySelectorAll('td').forEach((td, k) => {
-            // console.log(k / 2, k % 2);
             // SKIP first two cells
             if (k !== 0 && k !== 1) {
-              // console.log(Math.floor(k / 2) - 1);
-              // console.log(td.innerHTML, settledSummaryHeaders[Math.floor(k / 2) - 1]);
-
               const currentHeaderName = settledSummaryHeaders[Math.floor(k / 2) - 1];
 
               let settledSlab: SettledSlab = {};
@@ -247,7 +383,7 @@ export class AppComponent implements OnInit {
             return this.clearDirtyText(slab.noOfFacilities) !== '' && this.clearDirtyText(slab.totalAmount);
           });
 
-          this.cribData.settledSummary.push(settledSummary);
+          cribData.settledSummary.push(settledSummary);
         });
       }
 
@@ -284,11 +420,20 @@ export class AppComponent implements OnInit {
           }
         }
 
-        this.cribData.settledSummary.find(s => s.ownership === 'As Guarantor').settledTypes = settledTypesG;
-        this.cribData.settledSummary.find(s => s.ownership === 'As Borrower').settledTypes = settledTypesB;
+        cribData.settledSummary.find(s => s.ownership === 'As Guarantor').settledTypes = settledTypesG;
+        cribData.settledSummary.find(s => s.ownership === 'As Borrower').settledTypes = settledTypesB;
       }
     });
 
+    return cribData;
+  }
+
+  /**
+   * Process Inquiry Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processInquiryData(cribData: CribData, htmlDoc: Document): CribData {
     const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
     this.cribData.inquiries = [];
 
@@ -320,13 +465,30 @@ export class AppComponent implements OnInit {
       }
     });
 
+    return cribData;
+  }
 
+  /**
+   * Process Credit Facilities
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processCreditFacilities(cribData: CribData, htmlDoc: Document): CribData {
     const creditFacilityTables = htmlDoc.querySelectorAll('#bandstyle-Ver2');
-    this.cribData.creditFacilities = [];
+    cribData.creditFacilities = [];
     const cfSlabHeaders: string[] = [];
+    const creditFacilityBlockIds: number[] = [];
+
+    // ********************************************************************************** //
+    // ************** All facility tables in sequence of 1, 23, 45, 67.... ************** //
+    // ********************************************************************************** //
+    for (let k = 0; k <= creditFacilityTables.length / 22; k++) {
+      creditFacilityBlockIds.push(22 * k + 1);
+    }
+
     creditFacilityTables.forEach((tbl, i) => {
       // Credit Facility Details Section
-      if (i === 1) {
+      if (creditFacilityBlockIds.includes(i)) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
           const facility: CreditFacility = {
             id: +this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
@@ -347,12 +509,13 @@ export class AppComponent implements OnInit {
             restructuringDate: this.clearDirtyText(tr.querySelector('td:nth-child(16)').innerHTML),
             endDate: this.clearDirtyText(tr.querySelector('td:nth-child(17)').innerHTML),
             repayType: this.clearDirtyText(tr.querySelector('td:nth-child(18)').innerHTML),
-            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML), // TODO: Read purpose from summery
+            // TODO: Read purpose from summery, No need if this available from backend
+            purposeCode: this.clearDirtyText(tr.querySelector('td:nth-child(19)').innerHTML),
             coverage: this.clearDirtyText(tr.querySelector('td:nth-child(20)').innerHTML),
             paymentSlabs: []
           };
 
-          this.cribData.creditFacilities.push(facility);
+          cribData.creditFacilities.push(facility);
         });
       }
 
@@ -371,27 +534,26 @@ export class AppComponent implements OnInit {
 
       // Skip last two tables as it has disclaimer and legend
       if (i >= 3 && i < (creditFacilityTables.length - 2)) {
-        // console.log(tbl);
         this.selectNodeListByParam(tbl, 'tr').forEach(tr => {
           let creditFacility: CreditFacility;
           // Loop through td list
           this.selectNodeListByParam(tr, 'td').forEach((td, j) => {
 
-            // creditFacility.paymentSlabs = [];
-
             // Get the facility id, it's in column 1 : then find the relevent CF
             if (j === 0) {
               creditFacility = {};
-              creditFacility = this.cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
+              creditFacility = cribData.creditFacilities.find(cf => cf.id === +this.clearDirtyText(td.innerHTML));
             } else {
-              const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
-              creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
+              if (creditFacility !== undefined && !creditFacilityBlockIds.includes(i)) {
+                const slabValue: string = this.clearDirtyText(td.innerHTML) === 'OK' ? '0' : this.clearDirtyText(td.innerHTML);
+                creditFacility.paymentSlabs.push({ slab: cfSlabHeaders[j - 1], value: slabValue });
+              }
             }
           });
 
           // Inserting payment slab to credit facility
-          this.cribData.creditFacilities.forEach(cf => {
-            if (creditFacility && cf.id === creditFacility.id) {
+          cribData.creditFacilities.forEach(cf => {
+            if (creditFacility && creditFacility !== undefined && cf.id === creditFacility.id) {
               cf.paymentSlabs = creditFacility.paymentSlabs;
             }
           });
@@ -401,12 +563,106 @@ export class AppComponent implements OnInit {
       }
     });
 
-    console.log(this.cribData.creditFacilities);
+    return cribData;
+  }
+
+  /**
+   * Process Dishonour Of Cheques
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processDishonourOfCheques(cribData: CribData, htmlDoc: Document): CribData {
+    const dishonourOfChequeTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
+    cribData.dishonourOfCheques = [];
+
+    dishonourOfChequeTables.forEach((tbl, i) => {
+      if (i === 1) {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
+          const dishonourOfCheque: DishonourOfCheque = {
+            institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+            chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+            dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+            reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+          };
+
+          cribData.dishonourOfCheques.push(dishonourOfCheque);
+        });
+      }
+    });
+
+    return cribData;
+  }
+
+  /**
+   * Process Catalogue
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processCatalogue(cribData: CribData, htmlDoc: Document): CribData {
+    const catalogueTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
+    cribData.catalogue = [];
+    const catHeaders: { type: string, trIndex: number, childIndexs?: number[] }[] = [];
+    let dataList: number[] = [];
+
+    catalogueTables.forEach((tbl, i) => {
+      // Always last table is Catalogue
+      if (i === (catalogueTables.length - 1)) {
+        const nodeList = this.selectNodeListByParam(tbl, 'tr');
+
+        nodeList.forEach((tr, j) => {
+          // Skip 'Catalogue Description' heading
+          if (j !== 0) {
+            const header = tr.querySelector('td.tblHeader');
+            if (nodeList.length === (j + 1)) {
+              catHeaders[catHeaders.length - 1].childIndexs = dataList;
+            }
+
+            if (header !== null) {
+              if (catHeaders.length > 0) {
+                catHeaders[catHeaders.length - 1].childIndexs = dataList;
+              }
+
+              catHeaders.push({ type: this.clearDirtyText(header.innerHTML), trIndex: j, childIndexs: [] });
+              dataList = [];
+            } else {
+              dataList.push(j);
+            }
+          }
+        });
+
+        // Remove all the first element from the arrays
+        catHeaders.forEach(cat => {
+          cat.childIndexs.shift();
+        });
+
+        this.selectNodeListByParam(tbl, 'tr').forEach((tr, j) => {
+          const currentCatHeader = catHeaders.find(ch => ch.trIndex === j);
+          const dataCatHeader = catHeaders.find(ch => ch.childIndexs.includes(j));
+
+          if (currentCatHeader !== undefined) {
+            const catData: CatalogueData = {
+              type: currentCatHeader.type,
+              data: []
+            };
+            cribData.catalogue.push(catData);
+          }
+
+          if (dataCatHeader !== undefined) {
+            const code = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+            const desc = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
+
+            cribData.catalogue.find(c => c.type === dataCatHeader.type).data.push({ code, description: desc });
+          }
+        });
+      }
+    });
+
+    return cribData;
   }
 
   /**
    * Upload Process Method
-   *
    */
   uploadHandler(event) {
     const file = event.files[0];
@@ -421,9 +677,8 @@ export class AppComponent implements OnInit {
       const htmlDoc = parser.parseFromString(content, 'text/html');
 
       this.cribData = {
-        reportID: this.getElementContent('#texthdnTicketId', htmlDoc),
-        name: this.getNodeContent('#lblNameValue', htmlDoc),
-        nicNo: this.getNodeContent('#divIdentifier .text2New', htmlDoc)
+        reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
+        reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
       };
 
       console.log(this.cribData);
@@ -432,26 +687,35 @@ export class AppComponent implements OnInit {
     reader.readAsText(file);
   }
 
+  /**
+   * Get node content by css selector
+   */
   getNodeContent(selector: string, htmlDoc: Document): string {
     return htmlDoc.querySelectorAll(selector)[0].innerHTML;
   }
 
+  /**
+   * Get element content by css query
+   */
   getElementContent(selector: string, htmlDoc: Document): string {
     return (htmlDoc.querySelectorAll(selector)[0] as HTMLInputElement).value;
   }
 
+  /**
+   * Clear innerHTML with img data or dirty text
+   */
   clearDirtyText(inputStr: string): string {
     if (!inputStr.startsWith('<img')) {
       if (!inputStr.startsWith('--')) {
         return inputStr.replace(/(\r\n|\n|\r|=)/gm, '').replace(/\s+/g, ' ').trim().replace('&amp;', '&');
       } else {
-        return 'N/A';
+        return null;
       }
     } else {
       // because: Report empty indicated using this foolish method
       // => https://crims.crib.lk/HTML/Images/spacer.gif OR <img "" src"https://crims.crib.lk/HTML/Images/c_ND.gif">
       // it means, if inputStr starts with <img that's a empty
-      return 'N/A';
+      return null;
     }
   }
 
