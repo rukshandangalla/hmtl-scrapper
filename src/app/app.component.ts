@@ -15,6 +15,7 @@ import { SettledType } from './models/settled.type';
 import { CreditFacility } from './models/credit.facility';
 import { EconomicActivity } from './models/economic.activity';
 import { DishonourOfCheque } from './models/dishonour.of.cheque';
+import { CatalogueData } from './models/catalogue.data';
 
 @Component({
   selector: 'app-root',
@@ -56,6 +57,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.processInquiryData(this.cribData, htmlDoc);
     this.cribData = this.processCreditFacilities(this.cribData, htmlDoc);
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
+    this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
     console.log(this.cribData);
   }
@@ -585,6 +587,63 @@ export class AppComponent implements OnInit {
           };
 
           cribData.dishonourOfCheques.push(dishonourOfCheque);
+        });
+      }
+    });
+
+    return cribData;
+  }
+
+  /**
+   * Process Catalogue
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processCatalogue(cribData: CribData, htmlDoc: Document): CribData {
+    const catalogueTables = htmlDoc.querySelectorAll('#bandsummstyle-Ver2');
+    cribData.catalogue = [];
+    const catHeaders: { type: string, trIndex: number }[] = [];
+    const updatedCatlogues: CatalogueData[] = [];
+
+    catalogueTables.forEach((tbl, i) => {
+      // Always last table is Catalogue
+      if (i === (catalogueTables.length - 1)) {
+        tbl.querySelectorAll('.tblHeader').forEach((td, j) => {
+          // Skip 'Catalogue Description' heading
+          if (j !== 0) {
+            // Preparing sections
+            const catData: CatalogueData = {
+              type: this.clearDirtyText(td.innerHTML),
+              data: []
+            };
+            cribData.catalogue.push(catData);
+            // catHeaders.push({ type: this.clearDirtyText(td.innerHTML), trIndex: j });
+          }
+        });
+
+        // console.log(catHeaders);
+
+        let currentCat: CatalogueData;
+        this.selectNodeListByParam(tbl, 'tr').forEach((tr, j) => {
+          // Skip 'Catalogue Description' heading
+          if (j !== 0) {
+            const catType = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+            currentCat = cribData.catalogue.find(c => c.type === catType);
+
+            cribData.catalogue.forEach(cat => {
+              if (cat.type !== catType) {
+                // cat.data.push({ code: catType });
+              }
+            });
+
+            // const catDesc = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
+            // console.log(tr, catType);
+            console.log(currentCat, catType);
+
+            if (currentCat !== undefined) {
+              // currentCat.data.push({ code: catType });
+            }
+          }
         });
       }
     });
