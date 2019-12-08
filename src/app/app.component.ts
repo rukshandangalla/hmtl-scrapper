@@ -1,21 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { CribData } from './models/crib.data';
-import { DemographicData } from './models/demographic.data';
-import { FirmographicData } from './models/firmographic.data';
-import { CribReportTypeEnum } from './models/crib.report.type.enum';
+import { CribData } from './models/crib.data/crib.data';
+import { DemographicData } from './models/crib.data/demographic.data';
+import { FirmographicData } from './models/crib.data/firmographic.data';
+import { CribReportTypeEnum } from './models/crib.data/crib.report.type.enum';
 import { HttpClient } from '@angular/common/http';
-import { Address } from './models/address';
-import { Employment } from './models/employment';
-import { Liability } from './models/liability';
-import { ArrearsInfo } from './models/arrears.info';
-import { InquiryInfo } from './models/inquiry.info';
-import { SettledInfo } from './models/settled.info';
-import { SettledSlab } from './models/settled.slab';
-import { SettledType } from './models/settled.type';
-import { CreditFacility } from './models/credit.facility';
-import { EconomicActivity } from './models/economic.activity';
-import { DishonourOfCheque } from './models/dishonour.of.cheque';
-import { CatalogueData } from './models/catalogue.data';
+import { Address } from './models/crib.data/address';
+import { Employment } from './models/crib.data/employment';
+import { Liability } from './models/crib.data/liability';
+import { ArrearsInfo } from './models/crib.data/arrears.info';
+import { InquiryInfo } from './models/crib.data/inquiry.info';
+import { SettledInfo } from './models/crib.data/settled.info';
+import { SettledSlab } from './models/crib.data/settled.slab';
+import { SettledType } from './models/crib.data/settled.type';
+import { CreditFacility } from './models/crib.data/credit.facility';
+import { EconomicActivity } from './models/crib.data/economic.activity';
+import { DishonourOfCheque } from './models/crib.data/dishonour.of.cheque';
+import { CatalogueData } from './models/crib.data/catalogue.data';
+
+import { CribDataRequest, CribReportEmployeementDetails } from './models/crib.data.request/';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +31,6 @@ export class AppComponent implements OnInit {
   get getCribReportType() { return CribReportTypeEnum; }
 
   constructor(private http: HttpClient) { }
-
 
   async ngOnInit() {
 
@@ -45,8 +46,11 @@ export class AppComponent implements OnInit {
 
     // Get Report Date & ID
     this.cribData = {
-      reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
-      reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
+      reportDate: this.clearDirtyText(this.getNodeContent('#lblReportDateValue', htmlDoc)),
+      reportID: this.clearDirtyText(this.getElementContent('#texthdnTicketId', htmlDoc)),
+      userId: this.clearDirtyText(this.getNodeContent('#lblUserValue', htmlDoc)),
+      reportReason: this.clearDirtyText(this.getNodeContent('#lblReasonForOrderingValue', htmlDoc)),
+      reportName: this.clearDirtyText(this.getNodeContent('#lblProdNameValue', htmlDoc)),
     };
 
     this.cribData = this.updateReportType(this.cribData, htmlDoc);
@@ -59,7 +63,89 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData);
+    // console.log(this.cribData);
+
+    // Prepare Crib Request
+    const request = this.prepareCribRequest(this.cribData);
+
+    console.log(request);
+  }
+
+  /**
+   * @param cribData CribData Object
+   * @returns CribDataRequest
+   */
+  prepareCribRequest(cribData: CribData): CribDataRequest {
+    const cribRequest: CribDataRequest = {
+      mpt_CribReportTypeEnum: cribData.reportType,
+      referenceNumber: cribData.reportID,
+      cribUserId: cribData.userId,
+      reason: cribData.reportReason,
+      productName: cribData.reportName,
+      reportOrderDate: cribData.reportDate
+    };
+
+    cribRequest.cribReportPartnerDetail = {};
+    cribRequest.cribReportSearchDetail = {};
+
+    if (cribData.reportType === CribReportTypeEnum.Consumer) {
+      cribRequest.cribReportPartnerDetail.nICNumber = cribData.demographicData.nicNo;
+      cribRequest.cribReportPartnerDetail.drivingLicenseNumber = cribData.demographicData.dlNo;
+      cribRequest.cribReportPartnerDetail.passportNumber = cribData.demographicData.passportNo;
+      cribRequest.cribReportPartnerDetail.dateOfBirth = cribData.demographicData.dob;
+      cribRequest.cribReportPartnerDetail.citizenship = cribData.demographicData.citizenship;
+      cribRequest.cribReportPartnerDetail.mpt_GenderDescription = cribData.demographicData.gender;
+      cribRequest.cribReportPartnerDetail.maritalStatus = ''; // TODO GET - N/A in given reports
+      cribRequest.cribReportPartnerDetail.spouseName = ''; // TODO GET - N/A in given reports
+
+      cribRequest.cribReportSearchDetail.name = cribData.demographicData.name;
+      cribRequest.cribReportSearchDetail.nICNumber = cribData.demographicData.nicNo;
+      cribRequest.cribReportSearchDetail.mpt_GenderDescription = cribData.demographicData.gender;
+      cribRequest.cribReportSearchDetail.mallingAddress = ''; // TODO GET - N/A in given reports
+    }
+
+    if (cribData.reportType === CribReportTypeEnum.Corporate) {
+      cribRequest.cribReportPartnerDetail.businessRegistrationNumber = cribData.firmographicData.brNo;
+      cribRequest.cribReportPartnerDetail.vatRegistrationNumber = cribData.firmographicData.vatRegNo;
+      cribRequest.cribReportPartnerDetail.legalConstitution = cribData.firmographicData.legalConstitution;
+      cribRequest.cribReportPartnerDetail.dateOfRegistration = cribData.firmographicData.dateOfRegistration;
+
+      cribRequest.cribReportSearchDetail.name = cribData.firmographicData.name;
+      cribRequest.cribReportSearchDetail.BusinessRegistrationNumber = cribData.firmographicData.brNo;
+      cribRequest.cribReportSearchDetail.mallingAddress = ''; // TODO GET - N/A in given reports
+    }
+
+    cribRequest.cribReportAddresses = [];
+    cribData.mailingAddress.forEach(ad => {
+      cribRequest.cribReportAddresses.push({ mpt_CribReportAddressTypeEnum: '1', address: ad.address, reportedDate: ad.reportedDate });
+    });
+
+    cribData.permaneentAddress.forEach(ad => {
+      cribRequest.cribReportAddresses.push({ mpt_CribReportAddressTypeEnum: '2', address: ad.address, reportedDate: ad.reportedDate });
+    });
+
+    cribRequest.cribReportReportedNames = [];
+    cribData.reportedNames.forEach(rn => {
+      cribRequest.cribReportReportedNames.push({ reference: rn });
+    });
+
+    cribRequest.cribReportEmployeementDetails = [];
+    cribData.employmentData.forEach(ed => {
+      const epData: CribReportEmployeementDetails = {
+        employment: ed.employment,
+        profession: ed.profession,
+        employerName: ed.employerName,
+        businessName: ed.businessName,
+        businessRegistrationNumber: ed.businessRegistrationNo,
+        reportedDate: ed.reportedDate
+      };
+
+      cribRequest.cribReportEmployeementDetails.push(epData);
+    });
+
+    cribRequest.cribReportRelationshipDetails = [];
+
+    return cribRequest;
   }
 
   updateReportType(cribData: CribData, htmlDoc: Document): CribData {
