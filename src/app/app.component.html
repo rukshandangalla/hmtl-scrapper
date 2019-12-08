@@ -3,8 +3,8 @@
 </p-fileUpload> -->
 
 <div class="ui-g">
-  <div class="ui-g-12">
-    <p-card header="CRIB Extracted Info" styleClass="ui-card-shadow">
+  <div class="ui-g-12" *ngIf="cribData.reportType == getCribReportType.Consumer">
+    <p-card header="CRIB Extracted Info - Consumer" styleClass="ui-card-shadow">
       <table>
         <tr>
           <td class="is-heighlight">ReportOrderDate:</td>
@@ -19,31 +19,40 @@
         <tr>
           <td class="is-heighlight">Name:</td>
           <td width="10%"></td>
-          <td><b>{{cribData.name}}</b></td>
+          <td><b>{{cribData.demographicData.name}}</b></td>
         </tr>
         <tr>
           <td class="is-heighlight">NIC:</td>
           <td width="10%"></td>
-          <td><b>{{cribData.nicNo}}</b></td>
+          <td><b>{{cribData.demographicData.nicNo}}</b></td>
         </tr>
       </table>
     </p-card>
-
-    <!-- <p-table [value]="cribData">
-      <ng-template pTemplate="header">
+  </div>
+  <div class="ui-g-12" *ngIf="cribData.reportType == getCribReportType.Corporate">
+    <p-card header="CRIB Extracted Info - Corporate" styleClass="ui-card-shadow">
+      <table>
         <tr>
-          <th>Report ID</th>
-          <th>Name</th>
-          <th>NIC</th>
+          <td class="is-heighlight">ReportOrderDate:</td>
+          <td width="10%"></td>
+          <td><b>{{cribData.reportDate}}</b></td>
         </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-crib>
         <tr>
-          <td>{{crib.reportID}}</td>
-          <td>{{crib.name}}</td>
-          <td>{{crib.nic}}</td>
+          <td class="is-heighlight">ReportID:</td>
+          <td width="10%"></td>
+          <td><b>{{cribData.reportID}}</b></td>
         </tr>
-      </ng-template>
-    </p-table> -->
+        <tr>
+          <td class="is-heighlight">Name:</td>
+          <td width="10%"></td>
+          <td><b>{{cribData.firmographicData.name}}</b></td>
+        </tr>
+        <tr>
+          <td class="is-heighlight">Business RegNo:</td>
+          <td width="10%"></td>
+          <td><b>{{cribData.firmographicData.brNo}}</b></td>
+        </tr>
+      </table>
+    </p-card>
   </div>
 </div>
