@@ -16,9 +16,13 @@ import { CreditFacility } from './models/crib.data/credit.facility';
 import { EconomicActivity } from './models/crib.data/economic.activity';
 import { DishonourOfCheque } from './models/crib.data/dishonour.of.cheque';
 import { CatalogueData } from './models/crib.data/catalogue.data';
-
-import { CribDataRequest, CribReportEmployeementDetails } from './models/crib.data.request/';
 import { RelationshipData } from './models/crib.data/relationship.data';
+
+import {
+  CribDataRequest,
+  CribReportEmployeementDetails,
+  CribReportLiability
+} from './models/crib.data.request/';
 
 @Component({
   selector: 'app-root',
@@ -36,8 +40,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    // let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -65,7 +69,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    // console.log(this.cribData);
+    console.log(this.cribData);
 
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
@@ -154,6 +158,22 @@ export class AppComponent implements OnInit {
       };
 
       cribRequest.cribReportRelationshipDetails.push(rData);
+    });
+
+    cribRequest.cribReportLiabilities = [];
+    cribData.liabilities.forEach(l => {
+      // Skip Total element
+      if (l.ownership !== 'Total') {
+        const liability: CribReportLiability = {
+          mpt_CribReportOwnershipTypeDescription: l.ownership,
+          numberOfCreditFacilities: l.noOfFacilities,
+          cribCurrencyTypeCode: 'LKR', // TODO Read from Report
+          totalGrantedAmount: l.totalAmountGranted,
+          totalOutStandingAmount: l.totalOutstanding
+        };
+
+        cribRequest.cribReportLiabilities.push(liability);
+      }
     });
 
     return cribRequest;
@@ -316,6 +336,8 @@ export class AppComponent implements OnInit {
         });
       }
     });
+
+    // Dishonoured Cheques Summary
 
     return cribData;
   }
