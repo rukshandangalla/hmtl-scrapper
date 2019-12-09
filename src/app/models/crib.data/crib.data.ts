@@ -11,6 +11,7 @@ import { CribReportTypeEnum } from './crib.report.type.enum';
 import { DishonourOfCheque } from './dishonour.of.cheque';
 import { CatalogueData } from './catalogue.data';
 import { RelationshipData } from './relationship.data';
+import { DishonourOfChequeSummary } from './dishonour.of.cheque.summary';
 
 export interface CribData {
   reportType?: CribReportTypeEnum;
@@ -31,6 +32,7 @@ export interface CribData {
   inquiries?: InquiryInfo[];
   settledSummary?: SettledInfo[];
   creditFacilities?: CreditFacility[];
+  dishonourOfChequeSummary?: DishonourOfChequeSummary[];
   dishonourOfCheques?: DishonourOfCheque[];
   catalogue?: CatalogueData[];
 }

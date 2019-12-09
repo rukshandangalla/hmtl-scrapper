@@ -14,6 +14,7 @@ import { SettledSlab } from './models/crib.data/settled.slab';
 import { SettledType } from './models/crib.data/settled.type';
 import { CreditFacility } from './models/crib.data/credit.facility';
 import { EconomicActivity } from './models/crib.data/economic.activity';
+import { DishonourOfChequeSummary } from './models/crib.data/dishonour.of.cheque.summary';
 import { DishonourOfCheque } from './models/crib.data/dishonour.of.cheque';
 import { CatalogueData } from './models/crib.data/catalogue.data';
 import { RelationshipData } from './models/crib.data/relationship.data';
@@ -69,12 +70,12 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData);
-
+    // console.log(this.cribData.dishonourOfChequeSummary);
+    console.table(this.cribData.dishonourOfChequeSummary);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
-    console.log(request);
+    // console.log(request);
   }
 
   /**
@@ -338,6 +339,31 @@ export class AppComponent implements OnInit {
     });
 
     // Dishonoured Cheques Summary
+    const dishonouredChequeTbls = htmlDoc.querySelectorAll('#bandstyleDISSUMM-Ver2');
+    cribData.dishonourOfChequeSummary = [];
+
+    dishonouredChequeTbls.forEach((tbl, i) => {
+      if (i === 0) {
+        let chequeHeader: DishonourOfChequeSummary = {};
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+          if (tr.getAttribute('type') !== null) {
+            const td = tr.querySelector('td .tblDISHeader');
+            if (td !== null) {
+              const currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
+              chequeHeader = { cribCurrencyTypeCode: currCode, dishonourOfCheques: [] };
+            }
+          } else {
+            if (chequeHeader !== null) {
+              chequeHeader.numberOfCheques = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+              chequeHeader.totalAmount = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
+
+              cribData.dishonourOfChequeSummary.push(chequeHeader);
+              chequeHeader = null;
+            }
+          }
+        });
+      }
+    });
 
     return cribData;
   }
