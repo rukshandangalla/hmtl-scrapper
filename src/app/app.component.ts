@@ -70,8 +70,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    // console.log(this.cribData.dishonourOfChequeSummary);
-    console.table(this.cribData.dishonourOfChequeSummary);
+    console.log(this.cribData);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
@@ -739,27 +738,34 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Process Dishonour Of Cheques
+   * Process Dishonour Of Cheques - Depends on DishonourOfChequeSummary
    * @param cribData CribData Object
    * @returns CribData
    */
   processDishonourOfCheques(cribData: CribData, htmlDoc: Document): CribData {
     const dishonourOfChequeTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
-    cribData.dishonourOfCheques = [];
-
     dishonourOfChequeTables.forEach((tbl, i) => {
       // Second table is the cheque data - First one -> relationships
       if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
-          const dishonourOfCheque: DishonourOfCheque = {
-            institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-            dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
-          };
+        let currentSummary: DishonourOfChequeSummary = {};
 
-          cribData.dishonourOfCheques.push(dishonourOfCheque);
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+          if (tr.getAttribute('type') !== null) {
+            const td = tr.querySelector('td .tblDISHeader');
+            if (td !== null) {
+              const currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
+              currentSummary = this.cribData.dishonourOfChequeSummary.find(dc => dc.cribCurrencyTypeCode === currCode);
+            }
+          } else {
+            const dishonourOfCheque: DishonourOfCheque = {
+              institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+              chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+              amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+              dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+              reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+            };
+            currentSummary.dishonourOfCheques.push(dishonourOfCheque);
+          }
         });
       }
     });

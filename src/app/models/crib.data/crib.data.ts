@@ -33,6 +33,5 @@ export interface CribData {
   settledSummary?: SettledInfo[];
   creditFacilities?: CreditFacility[];
   dishonourOfChequeSummary?: DishonourOfChequeSummary[];
-  dishonourOfCheques?: DishonourOfCheque[];
   catalogue?: CatalogueData[];
 }
