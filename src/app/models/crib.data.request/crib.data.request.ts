@@ -12,5 +12,5 @@ export interface CribDataRequest {
   cribReportAddresses?: { mpt_CribReportAddressTypeEnum?: string, address?: string, reportedDate?: string }[];
   cribReportReportedNames?: { reference?: string }[];
   cribReportEmployeementDetails?: CribReportEmployeementDetails[];
-  cribReportRelationshipDetails?: { businessRegistrationNumbers?: string, name?: string, nature?: string }[];
+  cribReportRelationshipDetails?: { entityId?: string, name?: string, nature?: string }[];
 }

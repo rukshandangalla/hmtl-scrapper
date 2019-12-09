@@ -18,6 +18,7 @@ import { DishonourOfCheque } from './models/crib.data/dishonour.of.cheque';
 import { CatalogueData } from './models/crib.data/catalogue.data';
 
 import { CribDataRequest, CribReportEmployeementDetails } from './models/crib.data.request/';
+import { RelationshipData } from './models/crib.data/relationship.data';
 
 @Component({
   selector: 'app-root',
@@ -35,8 +36,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -56,6 +57,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.updateReportType(this.cribData, htmlDoc);
     this.cribData = this.processSummaryData(this.cribData, htmlDoc);
     this.cribData = this.processEmployementData(this.cribData, htmlDoc);
+    this.cribData = this.processRelationshipData(this.cribData, htmlDoc);
     this.cribData = this.processLiabilities(this.cribData, htmlDoc);
     this.cribData = this.processSettledData(this.cribData, htmlDoc);
     this.cribData = this.processInquiryData(this.cribData, htmlDoc);
@@ -144,6 +146,15 @@ export class AppComponent implements OnInit {
     });
 
     cribRequest.cribReportRelationshipDetails = [];
+    cribData.relationshipData.forEach(rd => {
+      const rData = {
+        entityId: rd.entityId,
+        name: rd.name,
+        nature: rd.nature
+      };
+
+      cribRequest.cribReportRelationshipDetails.push(rData);
+    });
 
     return cribRequest;
   }
@@ -302,6 +313,33 @@ export class AppComponent implements OnInit {
           };
 
           cribData.firmographicData.economicActivityHistory.push(economicActivity);
+        });
+      }
+    });
+
+    return cribData;
+  }
+
+  /**
+   * Process Relationship Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processRelationshipData(cribData: CribData, htmlDoc: Document): CribData {
+    const relationshipTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
+    cribData.relationshipData = [];
+
+    relationshipTables.forEach((tbl, i) => {
+      // First table is the check data - Second one -> cheque data
+      if (i === 0) {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const relationshipData: RelationshipData = {
+            entityId: this.clearDirtyText(tr.querySelector('td:nth-child(2)').querySelector('a').innerHTML),
+            name: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            nature: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
+          };
+
+          cribData.relationshipData.push(relationshipData);
         });
       }
     });
@@ -662,6 +700,7 @@ export class AppComponent implements OnInit {
     cribData.dishonourOfCheques = [];
 
     dishonourOfChequeTables.forEach((tbl, i) => {
+      // Second table is the cheque data - First one -> relationships
       if (i === 1) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const dishonourOfCheque: DishonourOfCheque = {
