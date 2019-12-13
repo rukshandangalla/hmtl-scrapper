@@ -1,4 +1,10 @@
-import { CribReportPartnerDetail, CribReportSearchDetail, CribReportEmployeementDetails, CribReportLiability } from './';
+import {
+  CribReportPartnerDetail,
+  CribReportSearchDetail,
+  CribReportEmployeementDetails,
+  CribReportLiability,
+  CribReportDishonouredChequeHeader
+} from './';
 
 export interface CribDataRequest {
   mpt_CribReportTypeEnum?: string;
@@ -14,4 +20,5 @@ export interface CribDataRequest {
   cribReportEmployeementDetails?: CribReportEmployeementDetails[];
   cribReportRelationshipDetails?: { entityId?: string, name?: string, nature?: string }[];
   cribReportLiabilities?: CribReportLiability[];
+  cribReportDishonouredChequeHeader?: CribReportDishonouredChequeHeader[];
 }

@@ -22,7 +22,9 @@ import { RelationshipData } from './models/crib.data/relationship.data';
 import {
   CribDataRequest,
   CribReportEmployeementDetails,
-  CribReportLiability
+  CribReportLiability,
+  CribReportDishonouredChequeHeader,
+  DishonouredChequeDetail
 } from './models/crib.data.request/';
 
 @Component({
@@ -70,11 +72,11 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData);
+    // console.log(this.cribData);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
-    // console.log(request);
+    console.log(request);
   }
 
   /**
@@ -174,6 +176,30 @@ export class AppComponent implements OnInit {
 
         cribRequest.cribReportLiabilities.push(liability);
       }
+    });
+
+    cribRequest.cribReportDishonouredChequeHeader = [];
+    cribData.dishonourOfChequeSummary.forEach(dc => {
+      const chequeHeader: CribReportDishonouredChequeHeader = {
+        cribCurrencyTypeCode: dc.cribCurrencyTypeCode,
+        numberOfCheques: dc.numberOfCheques,
+        totalAmount: dc.totalAmount,
+        dishonouredChequeDetails: []
+      };
+
+      dc.dishonourOfCheques.forEach(dcd => {
+        const chequeDetail: DishonouredChequeDetail = {
+          institutionAndBranch: dcd.institution,
+          chequeNumber: dcd.chequeNumber,
+          amount: dcd.amount,
+          dishonouredDate: dcd.dateDishonoured,
+          reason: dcd.reason,
+          disputed: ''
+        };
+        chequeHeader.dishonouredChequeDetails.push(chequeDetail);
+      });
+
+      cribRequest.cribReportDishonouredChequeHeader.push(chequeHeader);
     });
 
     return cribRequest;
@@ -747,14 +773,13 @@ export class AppComponent implements OnInit {
     dishonourOfChequeTables.forEach((tbl, i) => {
       // Second table is the cheque data - First one -> relationships
       if (i === 1) {
-        let currentSummary: DishonourOfChequeSummary = {};
+        let currCode = '';
 
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
           if (tr.getAttribute('type') !== null) {
             const td = tr.querySelector('td .tblDISHeader');
             if (td !== null) {
-              const currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
-              currentSummary = this.cribData.dishonourOfChequeSummary.find(dc => dc.cribCurrencyTypeCode === currCode);
+              currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
             }
           } else {
             const dishonourOfCheque: DishonourOfCheque = {
@@ -764,7 +789,12 @@ export class AppComponent implements OnInit {
               dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
               reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
             };
-            currentSummary.dishonourOfCheques.push(dishonourOfCheque);
+
+            this.cribData.dishonourOfChequeSummary.forEach(dc => {
+              if (dc.cribCurrencyTypeCode === currCode) {
+                dc.dishonourOfCheques.push(dishonourOfCheque);
+              }
+            });
           }
         });
       }
