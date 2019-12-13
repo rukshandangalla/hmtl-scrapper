@@ -28,7 +28,8 @@ import {
   CribReportStatusOfCreditFacility,
   CribReportSettledCreditFacility,
   CribReportSettledCreditFacilitySummary,
-  CribReportSettledCreditFacilityDetail
+  CribReportSettledCreditFacilityDetail,
+  CribReportInquiriesByLendingInstitution
 } from './models/crib.data.request/';
 
 @Component({
@@ -76,11 +77,11 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData.settledSummary);
+    console.log(this.cribData);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
-    console.log(request.cribReportSettledCreditFacilities);
+    console.log(request);
   }
 
   /**
@@ -252,6 +253,25 @@ export class AppComponent implements OnInit {
 
       cribRequest.cribReportSettledCreditFacilities.push(cribReportStatusOfCreditFacility);
     });
+
+    cribRequest.cribReportInquiriesByLendingInstitutions = [];
+    cribData.inquiries.forEach(inq => {
+      const inquery: CribReportInquiriesByLendingInstitution = {
+        inquiryDate: inq.inquiryDate,
+        institutionName: inq.institutionCategory, // There is a mismatch in sample and actual document
+        branchName: inq.institutionCategory, // There is a mismatch in sample and actual document
+        mpt_CribRequestReasonDescription: inq.reason,
+        creditFacilityType: inq.facilityType,
+        cribCurrencyTypeCode: inq.currency,
+        amount: inq.amount
+      };
+
+      cribRequest.cribReportInquiriesByLendingInstitutions.push(inquery);
+    });
+
+    // ToDO: Read this from the report
+    cribRequest.cribReportInquiriesBySubject = [];
+
 
     return cribRequest;
   }
