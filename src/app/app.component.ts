@@ -47,8 +47,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    // let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -230,7 +230,7 @@ export class AppComponent implements OnInit {
       summary.settledTypes.forEach(type => {
         const cribReportSettledCreditFacilityDetail: CribReportSettledCreditFacilityDetail = {
           mpt_CribReportCreditFacilityTypeCode: type.cfType,
-          cribCurrencyTypeCode: 'LKR', // TODO Get this from the report
+          cribCurrencyTypeCode: type.currency,
           numberOfCreditFacilities: type.noOfFacilities,
           totalGrantedAmount: type.totalAmount
         };
@@ -240,7 +240,7 @@ export class AppComponent implements OnInit {
       summary.settledSlabs.forEach(slab => {
         const cribReportSettledCreditFacilitySummary: CribReportSettledCreditFacilitySummary = {
           numberOfCreditFacilities: slab.noOfFacilities,
-          cribCurrencyTypeCode: 'LKR', // TODO Get this from the report
+          cribCurrencyTypeCode: slab.currency,
           totalGrantedAmount: slab.totalAmount,
           mpt_FromMonthCode: slab.reportingPeriod.split(' ')[0],
           fromYear: slab.reportingPeriod.split(' ')[1],
@@ -590,20 +590,26 @@ export class AppComponent implements OnInit {
           }
         });
 
-        // Extract Data : Assuming only two types of data -> As Borrower & As Guarantor
-        [tbl.querySelector('tr:nth-child(4)'), tbl.querySelector('tr:nth-child(5)')].forEach(tr => {
+        let currentCurrencyType = '';
+        let previousCurrencyType = '';
+
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const settledSummary: SettledInfo = {
             ownership: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            settledTypes: []
+            settledTypes: [],
+            settledSlabs: []
           };
 
-          settledSummary.settledSlabs = [];
+          currentCurrencyType = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+          if (currentCurrencyType !== '' && currentCurrencyType !== previousCurrencyType) {
+            previousCurrencyType = currentCurrencyType;
+          }
+
           tr.querySelectorAll('td').forEach((td, k) => {
             // SKIP first two cells
+            let settledSlab: SettledSlab = { currency: previousCurrencyType };
             if (k !== 0 && k !== 1) {
               const currentHeaderName = settledSummaryHeaders[Math.floor(k / 2) - 1];
-
-              let settledSlab: SettledSlab = {};
 
               // Get previous header name
               if (settledSummary.settledSlabs.length > 0) {
@@ -618,7 +624,6 @@ export class AppComponent implements OnInit {
                   settledSlab.noOfFacilities = td.innerHTML;
                   settledSummary.settledSlabs.push(settledSlab);
                 }
-
               } else {
                 settledSlab.reportingPeriod = currentHeaderName;
                 settledSlab.noOfFacilities = td.innerHTML;
@@ -631,9 +636,31 @@ export class AppComponent implements OnInit {
             return this.clearDirtyText(slab.noOfFacilities) !== '' && this.clearDirtyText(slab.totalAmount);
           });
 
-          cribData.settledSummary.push(settledSummary);
+          if (settledSummary.ownership !== 'Total') {
+            cribData.settledSummary.push(settledSummary);
+          }
         });
+
+        // Process SettledSummary to have one type (eg: no multiple 'As Borrower' or As Guarantor)
+        const finalSettledInfo: SettledInfo[] = [];
+
+        cribData.settledSummary.forEach(summary => {
+          const ownership: string = summary.ownership;
+          const currentSettledInfo = finalSettledInfo.find(fs => fs.ownership === ownership);
+          if (currentSettledInfo === undefined) {
+            finalSettledInfo.push(summary);
+          } else {
+            finalSettledInfo.forEach(fs => {
+              if (fs.ownership === ownership) {
+                fs.settledSlabs.push(...summary.settledSlabs);
+              }
+            });
+          }
+        });
+
+        cribData.settledSummary = finalSettledInfo;
       }
+
 
       // Settled summery details section
       if (i === 1) {
@@ -642,11 +669,18 @@ export class AppComponent implements OnInit {
         const settledTypesB: SettledType[] = [];
         const settledTypesG: SettledType[] = [];
 
+        let currentCurrencyType = '';
+        let previousCurrencyType = '';
+
         // tslint:disable-next-line: prefer-for-of
         for (let j = 0; j < htmlTbl.rows.length; j++) {
-
           if (j > 2) {
-            let settledType: SettledType = {};
+            currentCurrencyType = this.clearDirtyText(htmlTbl.rows[j].cells[0].innerHTML);
+            if (currentCurrencyType !== '' && currentCurrencyType !== previousCurrencyType) {
+              previousCurrencyType = currentCurrencyType;
+            }
+
+            let settledType: SettledType = { currency: previousCurrencyType };
             settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
 
             settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[2].innerHTML);
@@ -656,7 +690,7 @@ export class AppComponent implements OnInit {
               settledTypesB.push(settledType);
             }
 
-            settledType = {};
+            settledType = { currency: previousCurrencyType };
             settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
 
             settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[4].innerHTML);
