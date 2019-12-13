@@ -25,7 +25,7 @@ import {
   CribReportLiability,
   CribReportDishonouredChequeHeader,
   DishonouredChequeDetail,
-  CribReportStatusOfCreditFacilities
+  CribReportStatusOfCreditFacility
 } from './models/crib.data.request/';
 
 @Component({
@@ -206,7 +206,7 @@ export class AppComponent implements OnInit {
     cribRequest.cribReportStatusOfCreditFacilities = [];
     cribData.arrearsSummery.forEach(as => {
       as.arrearsSlabs.forEach(s => {
-        const cribReportStatusOfCreditFacilities: CribReportStatusOfCreditFacilities = {
+        const cribReportStatusOfCreditFacilities: CribReportStatusOfCreditFacility = {
           mpt_CribReportCreditFacilityStatusDescription: as.facilityStatus,
           mpt_CribReportNumberOfDaysInArrearsCode: s.slab,
           count: s.count
@@ -215,6 +215,14 @@ export class AppComponent implements OnInit {
         cribRequest.cribReportStatusOfCreditFacilities.push(cribReportStatusOfCreditFacilities);
       });
     });
+
+    // cribRequest.cribReportStatusOfCreditFacilities = [];
+    // cribData.settledSummary.forEach(ss => {
+    //   const cribReportStatusOfCreditFacility: CribReportStatusOfCreditFacility = {
+    //     mpt_CribReportOwnershipTypeDescription: ss.ownership,
+    //     cr
+    //   };
+    // });
 
     return cribRequest;
   }
