@@ -25,7 +25,10 @@ import {
   CribReportLiability,
   CribReportDishonouredChequeHeader,
   DishonouredChequeDetail,
-  CribReportStatusOfCreditFacility
+  CribReportStatusOfCreditFacility,
+  CribReportSettledCreditFacility,
+  CribReportSettledCreditFacilitySummary,
+  CribReportSettledCreditFacilityDetail
 } from './models/crib.data.request/';
 
 @Component({
@@ -73,11 +76,11 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData);
+    console.log(this.cribData.settledSummary);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
-    console.log(request);
+    console.log(request.cribReportSettledCreditFacilities);
   }
 
   /**
@@ -216,13 +219,39 @@ export class AppComponent implements OnInit {
       });
     });
 
-    // cribRequest.cribReportStatusOfCreditFacilities = [];
-    // cribData.settledSummary.forEach(ss => {
-    //   const cribReportStatusOfCreditFacility: CribReportStatusOfCreditFacility = {
-    //     mpt_CribReportOwnershipTypeDescription: ss.ownership,
-    //     cr
-    //   };
-    // });
+    cribRequest.cribReportSettledCreditFacilities = [];
+    cribData.settledSummary.forEach(summary => {
+      const cribReportStatusOfCreditFacility: CribReportSettledCreditFacility = {
+        mpt_CribReportOwnershipTypeDescription: summary.ownership,
+        cribReportSettledCreditFacilityDetail: [],
+        cribReportSettledCreditFacilitySummary: []
+      };
+
+      summary.settledTypes.forEach(type => {
+        const cribReportSettledCreditFacilityDetail: CribReportSettledCreditFacilityDetail = {
+          mpt_CribReportCreditFacilityTypeCode: type.cfType,
+          cribCurrencyTypeCode: 'LKR', // TODO Get this from the report
+          numberOfCreditFacilities: type.noOfFacilities,
+          totalGrantedAmount: type.totalAmount
+        };
+        cribReportStatusOfCreditFacility.cribReportSettledCreditFacilityDetail.push(cribReportSettledCreditFacilityDetail);
+      });
+
+      summary.settledSlabs.forEach(slab => {
+        const cribReportSettledCreditFacilitySummary: CribReportSettledCreditFacilitySummary = {
+          numberOfCreditFacilities: slab.noOfFacilities,
+          cribCurrencyTypeCode: 'LKR', // TODO Get this from the report
+          totalGrantedAmount: slab.totalAmount,
+          mpt_FromMonthCode: slab.reportingPeriod.split(' ')[0],
+          fromYear: slab.reportingPeriod.split(' ')[1],
+          mpt_ToMonthCode: slab.reportingPeriod.split(' ')[3],
+          toYear: slab.reportingPeriod.split(' ')[4],
+        };
+        cribReportStatusOfCreditFacility.cribReportSettledCreditFacilitySummary.push(cribReportSettledCreditFacilitySummary);
+      });
+
+      cribRequest.cribReportSettledCreditFacilities.push(cribReportStatusOfCreditFacility);
+    });
 
     return cribRequest;
   }

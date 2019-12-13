@@ -4,7 +4,8 @@ import {
   CribReportEmployeementDetails,
   CribReportLiability,
   CribReportDishonouredChequeHeader,
-  CribReportStatusOfCreditFacility
+  CribReportStatusOfCreditFacility,
+  CribReportSettledCreditFacility
 } from './';
 
 export interface CribDataRequest {
@@ -23,4 +24,5 @@ export interface CribDataRequest {
   cribReportLiabilities?: CribReportLiability[];
   cribReportDishonouredChequeHeader?: CribReportDishonouredChequeHeader[];
   cribReportStatusOfCreditFacilities?: CribReportStatusOfCreditFacility[];
+  cribReportSettledCreditFacilities?: CribReportSettledCreditFacility[];
 }
