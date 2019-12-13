@@ -24,7 +24,8 @@ import {
   CribReportEmployeementDetails,
   CribReportLiability,
   CribReportDishonouredChequeHeader,
-  DishonouredChequeDetail
+  DishonouredChequeDetail,
+  CribReportStatusOfCreditFacilities
 } from './models/crib.data.request/';
 
 @Component({
@@ -43,8 +44,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -72,7 +73,7 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    // console.log(this.cribData);
+    console.log(this.cribData);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
@@ -200,6 +201,19 @@ export class AppComponent implements OnInit {
       });
 
       cribRequest.cribReportDishonouredChequeHeader.push(chequeHeader);
+    });
+
+    cribRequest.cribReportStatusOfCreditFacilities = [];
+    cribData.arrearsSummery.forEach(as => {
+      as.arrearsSlabs.forEach(s => {
+        const cribReportStatusOfCreditFacilities: CribReportStatusOfCreditFacilities = {
+          mpt_CribReportCreditFacilityStatusDescription: as.facilityStatus,
+          mpt_CribReportNumberOfDaysInArrearsCode: s.slab,
+          count: s.count
+        };
+
+        cribRequest.cribReportStatusOfCreditFacilities.push(cribReportStatusOfCreditFacilities);
+      });
     });
 
     return cribRequest;
@@ -499,7 +513,7 @@ export class AppComponent implements OnInit {
                     slabName = '61-90';
                     break;
                   case 5:
-                    slabName = 'over 90';
+                    slabName = 'Over 90';
                     break;
                   default:
                     break;
