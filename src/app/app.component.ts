@@ -312,6 +312,15 @@ export class AppComponent implements OnInit {
       cribRequest.cribReportCreditFacilityDetails.push(creditFacility);
     });
 
+    cribRequest.cribReportCreditFacilityPurposes = [];
+    cribData.catalogue.forEach(cat => {
+      if (cat.type === 'Purp. (Credit Facility Purpose)') {
+        cat.data.forEach(d => {
+          cribRequest.cribReportCreditFacilityPurposes.push({ code: d.code, description: d.description });
+        });
+      }
+    });
+
     return cribRequest;
   }
 

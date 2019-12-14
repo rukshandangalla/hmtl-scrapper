@@ -30,4 +30,5 @@ export interface CribDataRequest {
   cribReportInquiriesByLendingInstitutions?: CribReportInquiriesByLendingInstitution[];
   cribReportInquiriesBySubject?: { inquiryDate?: string, reason?: string }[];
   cribReportCreditFacilityDetails?: CribReportCreditFacilityDetail[];
+  cribReportCreditFacilityPurposes?: { code?: string, description?: string }[];
 }
