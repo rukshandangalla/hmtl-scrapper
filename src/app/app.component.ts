@@ -29,7 +29,9 @@ import {
   CribReportSettledCreditFacility,
   CribReportSettledCreditFacilitySummary,
   CribReportSettledCreditFacilityDetail,
-  CribReportInquiriesByLendingInstitution
+  CribReportInquiriesByLendingInstitution,
+  CribReportCreditFacilityDetail,
+  CribReportCreditFacilityRepaymentHistory
 } from './models/crib.data.request/';
 
 @Component({
@@ -272,6 +274,43 @@ export class AppComponent implements OnInit {
     // ToDO: Read this from the report
     cribRequest.cribReportInquiriesBySubject = [];
 
+    cribRequest.cribReportCreditFacilityDetails = [];
+    cribData.creditFacilities.forEach(cf => {
+      const creditFacility: CribReportCreditFacilityDetail = {
+        mpt_CribReportInstitutionCategoryCode: cf.catalog,
+        institutionAndBranch: cf.institution,
+        mpt_CribReportCreditFacilityTypeCode: cf.cfType,
+        mpt_CribReportCreditFacilityStatusCode: cf.cfStatus,
+        mpt_CribReportCreditFacilityOwnershipTypeCode: cf.ownership,
+        cribCurrencyTypeCode: cf.currency,
+        grantedAmountLimit: cf.amountGrantedLimit,
+        currentBalance: cf.currentBalance,
+        arrearsAmount: cf.arrearsAmount,
+        installmentAmount: cf.installmentAmount,
+        writtenOffAmount: cf.amountWrittenOff,
+        reportedDate: cf.reportedDate,
+        firstDisbursementDate: cf.firstDisburseDate,
+        latestPaymentDate: cf.latestPaymentDate,
+        restructuringDate: cf.restructuringDate,
+        endDate: cf.endDate,
+        mpt_CribReportRepayTypeCode: cf.repayType,
+        cribReportCreditFacilityPurposeCode: cf.purposeCode,
+        cribReportCreditFacilityRepaymentHistory: [],
+        cribReportCreditFacilityOwnershipDetail: {} // Why do we need something like this??
+      };
+
+      cf.paymentSlabs.forEach(p => {
+        const slabAr: string[] = p.slab.split(' ');
+        const repaymentHistory: CribReportCreditFacilityRepaymentHistory = {
+          year: slabAr[0],
+          mpt_MonthCode: slabAr[1],
+          numberOfDaysInArrears: p.value
+        };
+        creditFacility.cribReportCreditFacilityRepaymentHistory.push(repaymentHistory);
+      });
+
+      cribRequest.cribReportCreditFacilityDetails.push(creditFacility);
+    });
 
     return cribRequest;
   }
