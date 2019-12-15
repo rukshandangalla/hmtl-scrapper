@@ -176,7 +176,7 @@ export class AppComponent implements OnInit {
         const liability: CribReportLiability = {
           mpt_CribReportOwnershipTypeDescription: l.ownership,
           numberOfCreditFacilities: l.noOfFacilities,
-          cribCurrencyTypeCode: 'LKR', // TODO Read from Report
+          cribCurrencyTypeCode: l.currency,
           totalGrantedAmount: l.totalAmountGranted,
           totalOutStandingAmount: l.totalOutstanding
         };
@@ -575,24 +575,37 @@ export class AppComponent implements OnInit {
     const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
     cribData.liabilities = [];
     cribData.arrearsSummery = [];
-
+    let currentCurrency = '';
     liabilityTables.forEach((tbl, i) => {
-      // console.log(tbl);
-      // Liability section
-      if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
-          const liability: Liability = {
-            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
-            noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            totalAmountGranted: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
-          };
 
-          cribData.liabilities.push(liability);
-        });
+      if (tbl.getAttribute('type') === 'freeform') {
+        const currencyElement = tbl.querySelector('tr:nth-child(2)').querySelector('td:nth-child(2)');
+        if (currencyElement !== null) {
+          currentCurrency = this.clearDirtyText(currencyElement.innerHTML);
+        }
       }
 
-      // Arrears section
+      // Liability section
+      // Capture this section by row,cell (1,1) ==> Ownership
+      // All table has this feature
+      const ownershipElement = tbl.querySelector('tr:nth-child(1)').querySelector('td:nth-child(1)');
+      if (ownershipElement !== null) {
+        if (this.clearDirtyText(ownershipElement.innerHTML) === 'Ownership') {
+          this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+            const liability: Liability = {
+              currency: currentCurrency,
+              ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+              noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+              totalAmountGranted: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+              totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
+            };
+
+            cribData.liabilities.push(liability);
+          });
+        }
+      }
+
+      // Arrears section : capature that segment with 'Status of Credit Facilities at a Glance (Excluding Settlements)' heading
       const headerElem = tbl.querySelector('td .tblHeader');
       if (headerElem !== null && this.clearDirtyText(headerElem.innerHTML).includes('Status of')) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
