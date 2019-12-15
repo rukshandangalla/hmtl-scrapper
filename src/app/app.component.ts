@@ -50,8 +50,8 @@ export class AppComponent implements OnInit {
   async ngOnInit() {
 
     /** Temp Read File */
-    // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
     // let cribFileContent = await this.http.get('/assets/05-047.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
@@ -84,7 +84,8 @@ export class AppComponent implements OnInit {
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
-    console.log(request);
+    // console.log(request);
+    console.log( JSON.stringify(request, null, '    ') );
   }
 
   /**
