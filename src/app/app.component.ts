@@ -212,13 +212,13 @@ export class AppComponent implements OnInit {
     cribRequest.cribReportStatusOfCreditFacilities = [];
     cribData.arrearsSummery.forEach(as => {
       as.arrearsSlabs.forEach(s => {
-        const cribReportStatusOfCreditFacilities: CribReportStatusOfCreditFacility = {
+        const cribReportStatusOfCreditFacility: CribReportStatusOfCreditFacility = {
           mpt_CribReportCreditFacilityStatusDescription: as.facilityStatus,
           mpt_CribReportNumberOfDaysInArrearsCode: s.slab,
           count: s.count
         };
 
-        cribRequest.cribReportStatusOfCreditFacilities.push(cribReportStatusOfCreditFacilities);
+        cribRequest.cribReportStatusOfCreditFacilities.push(cribReportStatusOfCreditFacility);
       });
     });
 
@@ -577,7 +577,7 @@ export class AppComponent implements OnInit {
     cribData.arrearsSummery = [];
 
     liabilityTables.forEach((tbl, i) => {
-
+      // console.log(tbl);
       // Liability section
       if (i === 1) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
@@ -592,8 +592,9 @@ export class AppComponent implements OnInit {
         });
       }
 
-      // Liability section
-      if (i === 2) {
+      // Arrears section
+      const headerElem = tbl.querySelector('td .tblHeader');
+      if (headerElem !== null && this.clearDirtyText(headerElem.innerHTML).includes('Status of')) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const arrearsSummery: ArrearsInfo = {};
           arrearsSummery.arrearsSlabs = [];
