@@ -52,6 +52,7 @@ export class AppComponent implements OnInit {
     /** Temp Read File */
     // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
     let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/05-047.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -271,8 +272,10 @@ export class AppComponent implements OnInit {
       cribRequest.cribReportInquiriesByLendingInstitutions.push(inquery);
     });
 
-    // ToDO: Read this from the report
     cribRequest.cribReportInquiriesBySubject = [];
+    cribData.inquiries.filter(i => i.institutionCategory === 'SELF').forEach(inq => {
+      cribRequest.cribReportInquiriesBySubject.push({inquiryDate: inq.inquiryDate, reason: inq.reason});
+    });
 
     cribRequest.cribReportCreditFacilityDetails = [];
     cribData.creditFacilities.forEach(cf => {
@@ -798,35 +801,35 @@ export class AppComponent implements OnInit {
    * @returns CribData
    */
   processInquiryData(cribData: CribData, htmlDoc: Document): CribData {
-    const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
     this.cribData.inquiries = [];
 
-    inquiryTables.forEach((tbl, i) => {
-      // Inquiry by lending institutions section
-      if (i === 0) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
-          const inquiry: InquiryInfo = {
-            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-            facilityType: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-            currency: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
-            amount: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
-          };
-          this.cribData.inquiries.push(inquiry);
-        });
-      }
-      // Inquiry by borrower section
-      if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
-          const inquiry: InquiryInfo = {
-            institutionCategory: 'SELF',
-            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
-          };
-          this.cribData.inquiries.push(inquiry);
-        });
-      }
+    // Inquiry by lending institutions section
+    const institueInquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
+    institueInquiryTables.forEach((tbl, i) => {
+      this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        const inquiry: InquiryInfo = {
+          inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+          reason: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+          facilityType: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+          currency: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
+          amount: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
+        };
+        this.cribData.inquiries.push(inquiry);
+      });
+    });
+
+    // Inquiry by borrower section
+    const subjectInquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver3');
+    subjectInquiryTables.forEach((tbl, i) => {
+      this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        const inquiry: InquiryInfo = {
+          institutionCategory: 'SELF',
+          inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          reason: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
+        };
+        this.cribData.inquiries.push(inquiry);
+      });
     });
 
     return cribData;
