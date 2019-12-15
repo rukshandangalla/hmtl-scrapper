@@ -1,21 +1,38 @@
 import { Component, OnInit } from '@angular/core';
-import { CribData } from './models/crib.data';
-import { DemographicData } from './models/demographic.data';
-import { FirmographicData } from './models/firmographic.data';
-import { CribReportTypeEnum } from './models/crib.report.type.enum';
+import { CribData } from './models/crib.data/crib.data';
+import { DemographicData } from './models/crib.data/demographic.data';
+import { FirmographicData } from './models/crib.data/firmographic.data';
+import { CribReportTypeEnum } from './models/crib.data/crib.report.type.enum';
 import { HttpClient } from '@angular/common/http';
-import { Address } from './models/address';
-import { Employment } from './models/employment';
-import { Liability } from './models/liability';
-import { ArrearsInfo } from './models/arrears.info';
-import { InquiryInfo } from './models/inquiry.info';
-import { SettledInfo } from './models/settled.info';
-import { SettledSlab } from './models/settled.slab';
-import { SettledType } from './models/settled.type';
-import { CreditFacility } from './models/credit.facility';
-import { EconomicActivity } from './models/economic.activity';
-import { DishonourOfCheque } from './models/dishonour.of.cheque';
-import { CatalogueData } from './models/catalogue.data';
+import { Address } from './models/crib.data/address';
+import { Employment } from './models/crib.data/employment';
+import { Liability } from './models/crib.data/liability';
+import { ArrearsInfo } from './models/crib.data/arrears.info';
+import { InquiryInfo } from './models/crib.data/inquiry.info';
+import { SettledInfo } from './models/crib.data/settled.info';
+import { SettledSlab } from './models/crib.data/settled.slab';
+import { SettledType } from './models/crib.data/settled.type';
+import { CreditFacility } from './models/crib.data/credit.facility';
+import { EconomicActivity } from './models/crib.data/economic.activity';
+import { DishonourOfChequeSummary } from './models/crib.data/dishonour.of.cheque.summary';
+import { DishonourOfCheque } from './models/crib.data/dishonour.of.cheque';
+import { CatalogueData } from './models/crib.data/catalogue.data';
+import { RelationshipData } from './models/crib.data/relationship.data';
+
+import {
+  CribDataRequest,
+  CribReportEmployeementDetails,
+  CribReportLiability,
+  CribReportDishonouredChequeHeader,
+  DishonouredChequeDetail,
+  CribReportStatusOfCreditFacility,
+  CribReportSettledCreditFacility,
+  CribReportSettledCreditFacilitySummary,
+  CribReportSettledCreditFacilityDetail,
+  CribReportInquiriesByLendingInstitution,
+  CribReportCreditFacilityDetail,
+  CribReportCreditFacilityRepaymentHistory
+} from './models/crib.data.request/';
 
 @Component({
   selector: 'app-root',
@@ -30,12 +47,12 @@ export class AppComponent implements OnInit {
 
   constructor(private http: HttpClient) { }
 
-
   async ngOnInit() {
 
     /** Temp Read File */
     // let cribFileContent = await this.http.get('/assets/09-051.mht', { responseType: 'text' }).toPromise();
-    let cribFileContent = await this.http.get('/assets/11-054.mht', { responseType: 'text' }).toPromise();
+    let cribFileContent = await this.http.get('/assets/12-197.mht', { responseType: 'text' }).toPromise();
+    // let cribFileContent = await this.http.get('/assets/05-047.mht', { responseType: 'text' }).toPromise();
 
     cribFileContent = cribFileContent.replace(/3D/g, '');
     // cribFileContent = cribFileContent.replace(/[= ]/g, '');
@@ -45,13 +62,17 @@ export class AppComponent implements OnInit {
 
     // Get Report Date & ID
     this.cribData = {
-      reportDate: this.getNodeContent('#lblReportDateValue', htmlDoc),
-      reportID: this.getElementContent('#texthdnTicketId', htmlDoc)
+      reportDate: this.clearDirtyText(this.getNodeContent('#lblReportDateValue', htmlDoc)),
+      reportID: this.clearDirtyText(this.getElementContent('#texthdnTicketId', htmlDoc)),
+      userId: this.clearDirtyText(this.getNodeContent('#lblUserValue', htmlDoc)),
+      reportReason: this.clearDirtyText(this.getNodeContent('#lblReasonForOrderingValue', htmlDoc)),
+      reportName: this.clearDirtyText(this.getNodeContent('#lblProdNameValue', htmlDoc)),
     };
 
     this.cribData = this.updateReportType(this.cribData, htmlDoc);
     this.cribData = this.processSummaryData(this.cribData, htmlDoc);
     this.cribData = this.processEmployementData(this.cribData, htmlDoc);
+    this.cribData = this.processRelationshipData(this.cribData, htmlDoc);
     this.cribData = this.processLiabilities(this.cribData, htmlDoc);
     this.cribData = this.processSettledData(this.cribData, htmlDoc);
     this.cribData = this.processInquiryData(this.cribData, htmlDoc);
@@ -60,6 +81,250 @@ export class AppComponent implements OnInit {
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
     console.log(this.cribData);
+    // Prepare Crib Request
+    const request = this.prepareCribRequest(this.cribData);
+
+    console.log(request);
+  }
+
+  /**
+   * @param cribData CribData Object
+   * @returns CribDataRequest
+   */
+  prepareCribRequest(cribData: CribData): CribDataRequest {
+    const cribRequest: CribDataRequest = {
+      mpt_CribReportTypeEnum: cribData.reportType,
+      referenceNumber: cribData.reportID,
+      cribUserId: cribData.userId,
+      reason: cribData.reportReason,
+      productName: cribData.reportName,
+      reportOrderDate: cribData.reportDate
+    };
+
+    cribRequest.cribReportPartnerDetail = {};
+    cribRequest.cribReportSearchDetail = {};
+
+    if (cribData.reportType === CribReportTypeEnum.Consumer) {
+      cribRequest.cribReportPartnerDetail.nICNumber = cribData.demographicData.nicNo;
+      cribRequest.cribReportPartnerDetail.drivingLicenseNumber = cribData.demographicData.dlNo;
+      cribRequest.cribReportPartnerDetail.passportNumber = cribData.demographicData.passportNo;
+      cribRequest.cribReportPartnerDetail.dateOfBirth = cribData.demographicData.dob;
+      cribRequest.cribReportPartnerDetail.citizenship = cribData.demographicData.citizenship;
+      cribRequest.cribReportPartnerDetail.mpt_GenderDescription = cribData.demographicData.gender;
+      cribRequest.cribReportPartnerDetail.maritalStatus = ''; // TODO GET - N/A in given reports
+      cribRequest.cribReportPartnerDetail.spouseName = ''; // TODO GET - N/A in given reports
+
+      cribRequest.cribReportSearchDetail.name = cribData.demographicData.name;
+      cribRequest.cribReportSearchDetail.nICNumber = cribData.demographicData.nicNo;
+      cribRequest.cribReportSearchDetail.mpt_GenderDescription = cribData.demographicData.gender;
+      cribRequest.cribReportSearchDetail.mallingAddress = ''; // TODO GET - N/A in given reports
+    }
+
+    if (cribData.reportType === CribReportTypeEnum.Corporate) {
+      cribRequest.cribReportPartnerDetail.businessRegistrationNumber = cribData.firmographicData.brNo;
+      cribRequest.cribReportPartnerDetail.vatRegistrationNumber = cribData.firmographicData.vatRegNo;
+      cribRequest.cribReportPartnerDetail.legalConstitution = cribData.firmographicData.legalConstitution;
+      cribRequest.cribReportPartnerDetail.dateOfRegistration = cribData.firmographicData.dateOfRegistration;
+
+      cribRequest.cribReportSearchDetail.name = cribData.firmographicData.name;
+      cribRequest.cribReportSearchDetail.BusinessRegistrationNumber = cribData.firmographicData.brNo;
+      cribRequest.cribReportSearchDetail.mallingAddress = ''; // TODO GET - N/A in given reports
+    }
+
+    cribRequest.cribReportAddresses = [];
+    cribData.mailingAddress.forEach(ad => {
+      cribRequest.cribReportAddresses.push({ mpt_CribReportAddressTypeEnum: '1', address: ad.address, reportedDate: ad.reportedDate });
+    });
+
+    cribData.permaneentAddress.forEach(ad => {
+      cribRequest.cribReportAddresses.push({ mpt_CribReportAddressTypeEnum: '2', address: ad.address, reportedDate: ad.reportedDate });
+    });
+
+    cribRequest.cribReportReportedNames = [];
+    cribData.reportedNames.forEach(rn => {
+      cribRequest.cribReportReportedNames.push({ reference: rn });
+    });
+
+    cribRequest.cribReportEmployeementDetails = [];
+    cribData.employmentData.forEach(ed => {
+      const epData: CribReportEmployeementDetails = {
+        employment: ed.employment,
+        profession: ed.profession,
+        employerName: ed.employerName,
+        businessName: ed.businessName,
+        businessRegistrationNumber: ed.businessRegistrationNo,
+        reportedDate: ed.reportedDate
+      };
+
+      cribRequest.cribReportEmployeementDetails.push(epData);
+    });
+
+    cribRequest.cribReportRelationshipDetails = [];
+    cribData.relationshipData.forEach(rd => {
+      const rData = {
+        entityId: rd.entityId,
+        name: rd.name,
+        nature: rd.nature
+      };
+
+      cribRequest.cribReportRelationshipDetails.push(rData);
+    });
+
+    cribRequest.cribReportLiabilities = [];
+    cribData.liabilities.forEach(l => {
+      // Skip Total element
+      if (l.ownership !== 'Total') {
+        const liability: CribReportLiability = {
+          mpt_CribReportOwnershipTypeDescription: l.ownership,
+          numberOfCreditFacilities: l.noOfFacilities,
+          cribCurrencyTypeCode: l.currency,
+          totalGrantedAmount: l.totalAmountGranted,
+          totalOutStandingAmount: l.totalOutstanding
+        };
+
+        cribRequest.cribReportLiabilities.push(liability);
+      }
+    });
+
+    cribRequest.cribReportDishonouredChequeHeader = [];
+    cribData.dishonourOfChequeSummary.forEach(dc => {
+      const chequeHeader: CribReportDishonouredChequeHeader = {
+        cribCurrencyTypeCode: dc.cribCurrencyTypeCode,
+        numberOfCheques: dc.numberOfCheques,
+        totalAmount: dc.totalAmount,
+        dishonouredChequeDetails: []
+      };
+
+      dc.dishonourOfCheques.forEach(dcd => {
+        const chequeDetail: DishonouredChequeDetail = {
+          institutionAndBranch: dcd.institution,
+          chequeNumber: dcd.chequeNumber,
+          amount: dcd.amount,
+          dishonouredDate: dcd.dateDishonoured,
+          reason: dcd.reason,
+          disputed: ''
+        };
+        chequeHeader.dishonouredChequeDetails.push(chequeDetail);
+      });
+
+      cribRequest.cribReportDishonouredChequeHeader.push(chequeHeader);
+    });
+
+    cribRequest.cribReportStatusOfCreditFacilities = [];
+    cribData.arrearsSummery.forEach(as => {
+      as.arrearsSlabs.forEach(s => {
+        const cribReportStatusOfCreditFacility: CribReportStatusOfCreditFacility = {
+          mpt_CribReportCreditFacilityStatusDescription: as.facilityStatus,
+          mpt_CribReportNumberOfDaysInArrearsCode: s.slab,
+          count: s.count
+        };
+
+        cribRequest.cribReportStatusOfCreditFacilities.push(cribReportStatusOfCreditFacility);
+      });
+    });
+
+    cribRequest.cribReportSettledCreditFacilities = [];
+    cribData.settledSummary.forEach(summary => {
+      const cribReportStatusOfCreditFacility: CribReportSettledCreditFacility = {
+        mpt_CribReportOwnershipTypeDescription: summary.ownership,
+        cribReportSettledCreditFacilityDetail: [],
+        cribReportSettledCreditFacilitySummary: []
+      };
+
+      summary.settledTypes.forEach(type => {
+        const cribReportSettledCreditFacilityDetail: CribReportSettledCreditFacilityDetail = {
+          mpt_CribReportCreditFacilityTypeCode: type.cfType,
+          cribCurrencyTypeCode: type.currency,
+          numberOfCreditFacilities: type.noOfFacilities,
+          totalGrantedAmount: type.totalAmount
+        };
+        cribReportStatusOfCreditFacility.cribReportSettledCreditFacilityDetail.push(cribReportSettledCreditFacilityDetail);
+      });
+
+      summary.settledSlabs.forEach(slab => {
+        const cribReportSettledCreditFacilitySummary: CribReportSettledCreditFacilitySummary = {
+          numberOfCreditFacilities: slab.noOfFacilities,
+          cribCurrencyTypeCode: slab.currency,
+          totalGrantedAmount: slab.totalAmount,
+          mpt_FromMonthCode: slab.reportingPeriod.split(' ')[0],
+          fromYear: slab.reportingPeriod.split(' ')[1],
+          mpt_ToMonthCode: slab.reportingPeriod.split(' ')[3],
+          toYear: slab.reportingPeriod.split(' ')[4],
+        };
+        cribReportStatusOfCreditFacility.cribReportSettledCreditFacilitySummary.push(cribReportSettledCreditFacilitySummary);
+      });
+
+      cribRequest.cribReportSettledCreditFacilities.push(cribReportStatusOfCreditFacility);
+    });
+
+    cribRequest.cribReportInquiriesByLendingInstitutions = [];
+    cribData.inquiries.forEach(inq => {
+      const inquery: CribReportInquiriesByLendingInstitution = {
+        inquiryDate: inq.inquiryDate,
+        institutionName: inq.institutionCategory, // There is a mismatch in sample and actual document
+        branchName: inq.institutionCategory, // There is a mismatch in sample and actual document
+        mpt_CribRequestReasonDescription: inq.reason,
+        creditFacilityType: inq.facilityType,
+        cribCurrencyTypeCode: inq.currency,
+        amount: inq.amount
+      };
+
+      cribRequest.cribReportInquiriesByLendingInstitutions.push(inquery);
+    });
+
+    cribRequest.cribReportInquiriesBySubject = [];
+    cribData.inquiries.filter(i => i.institutionCategory === 'SELF').forEach(inq => {
+      cribRequest.cribReportInquiriesBySubject.push({inquiryDate: inq.inquiryDate, reason: inq.reason});
+    });
+
+    cribRequest.cribReportCreditFacilityDetails = [];
+    cribData.creditFacilities.forEach(cf => {
+      const creditFacility: CribReportCreditFacilityDetail = {
+        mpt_CribReportInstitutionCategoryCode: cf.catalog,
+        institutionAndBranch: cf.institution,
+        mpt_CribReportCreditFacilityTypeCode: cf.cfType,
+        mpt_CribReportCreditFacilityStatusCode: cf.cfStatus,
+        mpt_CribReportCreditFacilityOwnershipTypeCode: cf.ownership,
+        cribCurrencyTypeCode: cf.currency,
+        grantedAmountLimit: cf.amountGrantedLimit,
+        currentBalance: cf.currentBalance,
+        arrearsAmount: cf.arrearsAmount,
+        installmentAmount: cf.installmentAmount,
+        writtenOffAmount: cf.amountWrittenOff,
+        reportedDate: cf.reportedDate,
+        firstDisbursementDate: cf.firstDisburseDate,
+        latestPaymentDate: cf.latestPaymentDate,
+        restructuringDate: cf.restructuringDate,
+        endDate: cf.endDate,
+        mpt_CribReportRepayTypeCode: cf.repayType,
+        cribReportCreditFacilityPurposeCode: cf.purposeCode,
+        cribReportCreditFacilityRepaymentHistory: [],
+        cribReportCreditFacilityOwnershipDetail: {} // Why do we need something like this??
+      };
+
+      cf.paymentSlabs.forEach(p => {
+        const slabAr: string[] = p.slab.split(' ');
+        const repaymentHistory: CribReportCreditFacilityRepaymentHistory = {
+          year: slabAr[0],
+          mpt_MonthCode: slabAr[1],
+          numberOfDaysInArrears: p.value
+        };
+        creditFacility.cribReportCreditFacilityRepaymentHistory.push(repaymentHistory);
+      });
+
+      cribRequest.cribReportCreditFacilityDetails.push(creditFacility);
+    });
+
+    cribRequest.cribReportCreditFacilityPurposes = [];
+    cribData.catalogue.forEach(cat => {
+      if (cat.type === 'Purp. (Credit Facility Purpose)') {
+        cat.data.forEach(d => {
+          cribRequest.cribReportCreditFacilityPurposes.push({ code: d.code, description: d.description });
+        });
+      }
+    });
+
+    return cribRequest;
   }
 
   updateReportType(cribData: CribData, htmlDoc: Document): CribData {
@@ -220,6 +485,60 @@ export class AppComponent implements OnInit {
       }
     });
 
+    // Dishonoured Cheques Summary
+    const dishonouredChequeTbls = htmlDoc.querySelectorAll('#bandstyleDISSUMM-Ver2');
+    cribData.dishonourOfChequeSummary = [];
+
+    dishonouredChequeTbls.forEach((tbl, i) => {
+      if (i === 0) {
+        let chequeHeader: DishonourOfChequeSummary = {};
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+          if (tr.getAttribute('type') !== null) {
+            const td = tr.querySelector('td .tblDISHeader');
+            if (td !== null) {
+              const currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
+              chequeHeader = { cribCurrencyTypeCode: currCode, dishonourOfCheques: [] };
+            }
+          } else {
+            if (chequeHeader !== null) {
+              chequeHeader.numberOfCheques = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+              chequeHeader.totalAmount = this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML);
+
+              cribData.dishonourOfChequeSummary.push(chequeHeader);
+              chequeHeader = null;
+            }
+          }
+        });
+      }
+    });
+
+    return cribData;
+  }
+
+  /**
+   * Process Relationship Data
+   * @param cribData CribData Object
+   * @returns CribData
+   */
+  processRelationshipData(cribData: CribData, htmlDoc: Document): CribData {
+    const relationshipTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
+    cribData.relationshipData = [];
+
+    relationshipTables.forEach((tbl, i) => {
+      // First table is the check data - Second one -> cheque data
+      if (i === 0) {
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+          const relationshipData: RelationshipData = {
+            entityId: this.clearDirtyText(tr.querySelector('td:nth-child(2)').querySelector('a').innerHTML),
+            name: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+            nature: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
+          };
+
+          cribData.relationshipData.push(relationshipData);
+        });
+      }
+    });
+
     return cribData;
   }
 
@@ -259,25 +578,39 @@ export class AppComponent implements OnInit {
     const liabilityTables = htmlDoc.querySelectorAll('#bandsummstyleNew-Ver2');
     cribData.liabilities = [];
     cribData.arrearsSummery = [];
-
+    let currentCurrency = '';
     liabilityTables.forEach((tbl, i) => {
 
-      // Liability section
-      if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
-          const liability: Liability = {
-            ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
-            noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            totalAmountGranted: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
-          };
-
-          cribData.liabilities.push(liability);
-        });
+      if (tbl.getAttribute('type') === 'freeform') {
+        const currencyElement = tbl.querySelector('tr:nth-child(2)').querySelector('td:nth-child(2)');
+        if (currencyElement !== null) {
+          currentCurrency = this.clearDirtyText(currencyElement.innerHTML);
+        }
       }
 
       // Liability section
-      if (i === 2) {
+      // Capture this section by row,cell (1,1) ==> Ownership
+      // All table has this feature
+      const ownershipElement = tbl.querySelector('tr:nth-child(1)').querySelector('td:nth-child(1)');
+      if (ownershipElement !== null) {
+        if (this.clearDirtyText(ownershipElement.innerHTML) === 'Ownership') {
+          this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+            const liability: Liability = {
+              currency: currentCurrency,
+              ownership: this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML),
+              noOfFacilities: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+              totalAmountGranted: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+              totalOutstanding: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML)
+            };
+
+            cribData.liabilities.push(liability);
+          });
+        }
+      }
+
+      // Arrears section : capature that segment with 'Status of Credit Facilities at a Glance (Excluding Settlements)' heading
+      const headerElem = tbl.querySelector('td .tblHeader');
+      if (headerElem !== null && this.clearDirtyText(headerElem.innerHTML).includes('Status of')) {
         this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const arrearsSummery: ArrearsInfo = {};
           arrearsSummery.arrearsSlabs = [];
@@ -302,7 +635,7 @@ export class AppComponent implements OnInit {
                     slabName = '61-90';
                     break;
                   case 5:
-                    slabName = 'over 90';
+                    slabName = 'Over 90';
                     break;
                   default:
                     break;
@@ -342,20 +675,26 @@ export class AppComponent implements OnInit {
           }
         });
 
-        // Extract Data : Assuming only two types of data -> As Borrower & As Guarantor
-        [tbl.querySelector('tr:nth-child(4)'), tbl.querySelector('tr:nth-child(5)')].forEach(tr => {
+        let currentCurrencyType = '';
+        let previousCurrencyType = '';
+
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
           const settledSummary: SettledInfo = {
             ownership: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            settledTypes: []
+            settledTypes: [],
+            settledSlabs: []
           };
 
-          settledSummary.settledSlabs = [];
+          currentCurrencyType = this.clearDirtyText(tr.querySelector('td:nth-child(1)').innerHTML);
+          if (currentCurrencyType !== '' && currentCurrencyType !== previousCurrencyType) {
+            previousCurrencyType = currentCurrencyType;
+          }
+
           tr.querySelectorAll('td').forEach((td, k) => {
             // SKIP first two cells
+            let settledSlab: SettledSlab = { currency: previousCurrencyType };
             if (k !== 0 && k !== 1) {
               const currentHeaderName = settledSummaryHeaders[Math.floor(k / 2) - 1];
-
-              let settledSlab: SettledSlab = {};
 
               // Get previous header name
               if (settledSummary.settledSlabs.length > 0) {
@@ -370,7 +709,6 @@ export class AppComponent implements OnInit {
                   settledSlab.noOfFacilities = td.innerHTML;
                   settledSummary.settledSlabs.push(settledSlab);
                 }
-
               } else {
                 settledSlab.reportingPeriod = currentHeaderName;
                 settledSlab.noOfFacilities = td.innerHTML;
@@ -383,9 +721,31 @@ export class AppComponent implements OnInit {
             return this.clearDirtyText(slab.noOfFacilities) !== '' && this.clearDirtyText(slab.totalAmount);
           });
 
-          cribData.settledSummary.push(settledSummary);
+          if (settledSummary.ownership !== 'Total') {
+            cribData.settledSummary.push(settledSummary);
+          }
         });
+
+        // Process SettledSummary to have one type (eg: no multiple 'As Borrower' or As Guarantor)
+        const finalSettledInfo: SettledInfo[] = [];
+
+        cribData.settledSummary.forEach(summary => {
+          const ownership: string = summary.ownership;
+          const currentSettledInfo = finalSettledInfo.find(fs => fs.ownership === ownership);
+          if (currentSettledInfo === undefined) {
+            finalSettledInfo.push(summary);
+          } else {
+            finalSettledInfo.forEach(fs => {
+              if (fs.ownership === ownership) {
+                fs.settledSlabs.push(...summary.settledSlabs);
+              }
+            });
+          }
+        });
+
+        cribData.settledSummary = finalSettledInfo;
       }
+
 
       // Settled summery details section
       if (i === 1) {
@@ -394,11 +754,18 @@ export class AppComponent implements OnInit {
         const settledTypesB: SettledType[] = [];
         const settledTypesG: SettledType[] = [];
 
+        let currentCurrencyType = '';
+        let previousCurrencyType = '';
+
         // tslint:disable-next-line: prefer-for-of
         for (let j = 0; j < htmlTbl.rows.length; j++) {
-
           if (j > 2) {
-            let settledType: SettledType = {};
+            currentCurrencyType = this.clearDirtyText(htmlTbl.rows[j].cells[0].innerHTML);
+            if (currentCurrencyType !== '' && currentCurrencyType !== previousCurrencyType) {
+              previousCurrencyType = currentCurrencyType;
+            }
+
+            let settledType: SettledType = { currency: previousCurrencyType };
             settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
 
             settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[2].innerHTML);
@@ -408,7 +775,7 @@ export class AppComponent implements OnInit {
               settledTypesB.push(settledType);
             }
 
-            settledType = {};
+            settledType = { currency: previousCurrencyType };
             settledType.cfType = this.clearDirtyText(htmlTbl.rows[j].cells[1].innerHTML);
 
             settledType.noOfFacilities = this.clearDirtyText(htmlTbl.rows[j].cells[4].innerHTML);
@@ -434,35 +801,35 @@ export class AppComponent implements OnInit {
    * @returns CribData
    */
   processInquiryData(cribData: CribData, htmlDoc: Document): CribData {
-    const inquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
     this.cribData.inquiries = [];
 
-    inquiryTables.forEach((tbl, i) => {
-      // Inquiry by lending institutions section
-      if (i === 0) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
-          const inquiry: InquiryInfo = {
-            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-            facilityType: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-            currency: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
-            amount: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
-          };
-          this.cribData.inquiries.push(inquiry);
-        });
-      }
-      // Inquiry by borrower section
-      if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
-          const inquiry: InquiryInfo = {
-            institutionCategory: 'SELF',
-            inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
-          };
-          this.cribData.inquiries.push(inquiry);
-        });
-      }
+    // Inquiry by lending institutions section
+    const institueInquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver8');
+    institueInquiryTables.forEach((tbl, i) => {
+      this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        const inquiry: InquiryInfo = {
+          inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          institutionCategory: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+          reason: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+          facilityType: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+          currency: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML),
+          amount: this.clearDirtyText(tr.querySelector('td:nth-child(7)').innerHTML),
+        };
+        this.cribData.inquiries.push(inquiry);
+      });
+    });
+
+    // Inquiry by borrower section
+    const subjectInquiryTables = htmlDoc.querySelectorAll('#bandstyle-Ver3');
+    subjectInquiryTables.forEach((tbl, i) => {
+      this.selectNodeListByParam(tbl, 'tr:nth-child(n + 3)').forEach(tr => {
+        const inquiry: InquiryInfo = {
+          institutionCategory: 'SELF',
+          inquiryDate: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+          reason: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML)
+        };
+        this.cribData.inquiries.push(inquiry);
+      });
     });
 
     return cribData;
@@ -567,26 +934,38 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Process Dishonour Of Cheques
+   * Process Dishonour Of Cheques - Depends on DishonourOfChequeSummary
    * @param cribData CribData Object
    * @returns CribData
    */
   processDishonourOfCheques(cribData: CribData, htmlDoc: Document): CribData {
     const dishonourOfChequeTables = htmlDoc.querySelectorAll('#bandstyleDIS-Ver2');
-    cribData.dishonourOfCheques = [];
-
     dishonourOfChequeTables.forEach((tbl, i) => {
+      // Second table is the cheque data - First one -> relationships
       if (i === 1) {
-        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 4)').forEach(tr => {
-          const dishonourOfCheque: DishonourOfCheque = {
-            institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
-            chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
-            amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
-            dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
-            reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
-          };
+        let currCode = '';
 
-          cribData.dishonourOfCheques.push(dishonourOfCheque);
+        this.selectNodeListByParam(tbl, 'tr:nth-child(n + 2)').forEach(tr => {
+          if (tr.getAttribute('type') !== null) {
+            const td = tr.querySelector('td .tblDISHeader');
+            if (td !== null) {
+              currCode = this.clearDirtyText(td.innerHTML.replace('Currency - ', ''));
+            }
+          } else {
+            const dishonourOfCheque: DishonourOfCheque = {
+              institution: this.clearDirtyText(tr.querySelector('td:nth-child(2)').innerHTML),
+              chequeNumber: this.clearDirtyText(tr.querySelector('td:nth-child(3)').innerHTML),
+              amount: this.clearDirtyText(tr.querySelector('td:nth-child(4)').innerHTML),
+              dateDishonoured: this.clearDirtyText(tr.querySelector('td:nth-child(5)').innerHTML),
+              reason: this.clearDirtyText(tr.querySelector('td:nth-child(6)').innerHTML)
+            };
+
+            this.cribData.dishonourOfChequeSummary.forEach(dc => {
+              if (dc.cribCurrencyTypeCode === currCode) {
+                dc.dishonourOfCheques.push(dishonourOfCheque);
+              }
+            });
+          }
         });
       }
     });
