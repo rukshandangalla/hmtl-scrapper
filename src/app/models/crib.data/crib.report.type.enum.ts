@@ -1,4 +1,4 @@
 export enum CribReportTypeEnum {
-  Corporate = 'CO',
-  Consumer = 'IN'
+  Corporate = 2,
+  Consumer = 1
 }
