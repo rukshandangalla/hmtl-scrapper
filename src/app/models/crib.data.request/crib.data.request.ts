@@ -11,7 +11,7 @@ import {
 } from './';
 
 export interface CribDataRequest {
-  mpt_CribReportTypeEnum?: string;
+  mpt_CribReportTypeEnum?: number;
   referenceNumber?: string;
   cribUserId?: string;
   reason?: string;

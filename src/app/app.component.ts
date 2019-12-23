@@ -80,12 +80,12 @@ export class AppComponent implements OnInit {
     this.cribData = this.processDishonourOfCheques(this.cribData, htmlDoc);
     this.cribData = this.processCatalogue(this.cribData, htmlDoc);
 
-    console.log(this.cribData);
+    // console.log(this.cribData);
     // Prepare Crib Request
     const request = this.prepareCribRequest(this.cribData);
 
     // console.log(request);
-    console.log( JSON.stringify(request, null, '    ') );
+    console.log( JSON.stringify(this.cribData, null, '    ') );
   }
 
   /**
